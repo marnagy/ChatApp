@@ -8,7 +8,7 @@ namespace ChatServer
 	{
 		public static void Main(string[] args)
 		{
-			var server = ChatServer.GetInstance(new FileSystemDatabase());
+			var server = ChatServer.GetInstance(FileSystemDatabase.Initialize());
 			server.Run();
 		}
 	}
