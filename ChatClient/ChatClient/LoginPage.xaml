@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             x:Class="ChatClient.LoginPage">
+    <ContentPage.Content>
+		<StackLayout Padding="10, 50" BackgroundColor="LightSkyBlue" >
+			<ActivityIndicator x:Name="indicator" VerticalOptions="Center" IsVisible="{Binding isLoading}" IsRunning="{Binding isLoading}"/>
+			<Label x:Name="emailLabel" FontSize="Medium" HorizontalOptions="Center" Text="E-mail" 
+				   IsVisible="False"/>
+			<Entry x:Name="emailEntry" Placeholder="Enter e-mail"
+				   HorizontalTextAlignment="Center" IsVisible="False"/>
+			<Label x:Name="usernameLabel" FontSize="Medium"
+				   HorizontalOptions="Center" Text="Username" />
+			<Entry x:Name="usernameEntry" Placeholder="Enter username"
+				   HorizontalTextAlignment="Center"/>
+			<Label x:Name="passwordLabel" FontSize="Medium" HorizontalOptions="Center" Text="Password" />
+			<Entry x:Name="passwordEntry" Placeholder="Enter password" IsPassword="True" 
+				   HorizontalTextAlignment="Center"/>
+			
+			<Grid x:Name="btnGrid">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*"/>
+					<ColumnDefinition Width="*"/>
+				</Grid.ColumnDefinitions>
+
+				<Button x:Name="loginBtn" Text="Log In"
+						Clicked="loginBtn_Clicked" Grid.Column="0"/>
+				<Button x:Name="newAccountBtn" Text="Create new account" 
+						Clicked="newAccountBtn_Clicked" Grid.Column="1" />
+
+			</Grid>
+			<StackLayout x:Name="btnStack" IsVisible="False">
+				<Button x:Name="createAccountBtn" Text="Create new account" 
+						Clicked="createAccountBtn_Clicked" />
+			</StackLayout>
+		</StackLayout>
+	</ContentPage.Content>
+</ContentPage>

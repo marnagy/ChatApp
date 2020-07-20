@@ -10,7 +10,7 @@ namespace ChatClient
 		{
 			InitializeComponent();
 
-			MainPage = new MainPage();
+			MainPage = new LoginPage(this);
 		}
 
 		protected override void OnStart()
