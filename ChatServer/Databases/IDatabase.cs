@@ -11,6 +11,7 @@ namespace ChatServer.Databases
 		bool initialized { get; }
 		(bool successful, string reasonOfFail) AddUser(Email email, Username username, Password password);
 		(bool successful, string reasonOfFail) SignIn(Username username, Password password);
+		ChatInfo[] GetChats(Username username, ChatType type);
 		bool MakeOnline(User user);
 		bool AddMessage(ChatInfo info, IMessage message);
 		/// <summary>
