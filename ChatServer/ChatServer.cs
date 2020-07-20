@@ -188,13 +188,14 @@ namespace ChatServer
 						resp.Send(bw);
 					}
 				}
-
-
+				// logged in
 			}
 
 			private AccountInfoResponse GetAccountInfo(Username username)
 			{
-				throw new NotImplementedException();
+				var simpleChats = server.database.GetChats(username, ChatType.Simple);
+				var groupChats = server.database.GetChats(username, ChatType.Group);
+				return new AccountInfoResponse(simpleChats, groupChats, sessionID);
 			}
 		}
 		
