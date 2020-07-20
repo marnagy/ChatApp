@@ -6,12 +6,13 @@ namespace ChatLib
 {
 	public class User
 	{
-		public readonly string email;
-		public readonly string username;
+		public readonly Email email;
+		public readonly Username username;
 		
-		public User(string username, char[] password, string email)
+		public User(string username, string email)
 		{
-
+			this.email = email.ToEmail();
+			this.username = username.ToUsername();
 		}
 	}
 }
