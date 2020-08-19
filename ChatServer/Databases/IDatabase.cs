@@ -13,14 +13,14 @@ namespace ChatServer.Databases
 		(bool successful, string reasonOfFail) SignIn(Username username, Password password);
 		ChatInfo[] GetChats(Username username, ChatType type);
 		bool MakeOnline(User user);
-		bool AddMessage(ChatInfo info, IMessage message);
+		(bool success, string ReasonOrID) AddMessage(ChatInfo info, Message message);
 		/// <summary>
 		/// Creates new chat of 2 users
 		/// </summary>
 		/// <param name="user1"></param>
 		/// <param name="user2"></param>
 		/// <returns>ValueTuple of success and name of created chat if success.</returns>
-		(bool success, string reason) CreateChat(User user1, User user2, IMessage msg);
+		(bool success, string ReasonOrName) CreateChat(User user1, User user2, Message msg);
 		/// <summary>
 		/// Method to initialize group chat.
 		/// </summary>

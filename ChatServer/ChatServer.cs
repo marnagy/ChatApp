@@ -145,7 +145,7 @@ namespace ChatServer
 				bw.Write(sessionID);
 				bw.Flush();
 
-				IResponse resp;
+				Response resp;
 				while (!loggedIn)
 				{
 					resp = null;
