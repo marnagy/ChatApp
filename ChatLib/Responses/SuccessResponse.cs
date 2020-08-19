@@ -1,26 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace ChatLib.Responses
 {
-	public struct SuccessResponse : IResponse
+	public sealed class SuccessResponse : Response
 	{
 		const ResponseType type = ResponseType.Success;
-		private readonly long sessionID;
-		public SuccessResponse(long sessionID)
+		public SuccessResponse(long sessionID) : base(type, sessionID)
 		{
-			this.sessionID = sessionID;
 		}
-		public void Send(BinaryWriter writer)
+
+		public override void GetObjectData(SerializationInfo info, StreamingContext context)
 		{
-			lock (writer)
-			{
-				writer.Write(sessionID);
-				writer.Write(type.ToString());
-				writer.Flush();
-			}
+			info.AddValue("SessionID", SessionID);
+			info.AddValue("Type", Type);
 		}
 	}
 }
