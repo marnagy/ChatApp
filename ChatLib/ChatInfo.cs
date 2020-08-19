@@ -2,36 +2,29 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Runtime.Serialization;
 
 namespace ChatLib
 {
-	public class ChatInfo : ISendable
+	[Serializable]
+	public class ChatInfo : ISerializable
 	{
-		public readonly ChatType type;
-		public readonly string chatID;
+		public readonly ChatType Type;
+		public readonly string ID;
 		public readonly Username[] participants;
 		public ChatInfo(ChatType type, string chatID, Username[] participants)
 		{
 			if (participants == null) throw new ArgumentNullException();
-			this.type = type;
-			this.chatID = chatID;
+			this.Type = type;
+			this.ID = chatID;
 			this.participants = participants;
 		}
 
-		public void Send(BinaryWriter writer)
+		public void GetObjectData(SerializationInfo info, StreamingContext context)
 		{
-			lock (writer)
-			{
-				writer.Write(type.ToString());
-				writer.Write(chatID);
-				writer.Write(participants.Length);
-				foreach (var username in participants)
-				{
-					writer.Write(username.ToString());
-				}
-
-				writer.Flush();
-			}
+			info.AddValue("ChatType", Type);
+			info.AddValue("ChatID", ID);
+			info.AddValue("Participants", participants);
 		}
 	}
 }
