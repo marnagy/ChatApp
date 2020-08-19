@@ -19,5 +19,9 @@ namespace ChatLib
 		{
 			return new Password(password);
 		}
+		public static ChatID ToChatID(this string chatID)
+		{
+			return new ChatID(chatID);
+		}
 	}
 }
