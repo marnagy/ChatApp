@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ChatLib.Messages
 {
-	enum MessageType
+	public enum MessageType
 	{
 		TextMessage
 	}
