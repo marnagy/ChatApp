@@ -6,14 +6,16 @@ using System.Text;
 
 namespace ChatLib.BinaryFormatters
 {
-	class BinaryFormatterWriter
+	public class BinaryFormatterWriter
 	{
 		private readonly BinaryFormatter formatter;
 		private readonly Stream stream;
 		public bool IsClosed { get; private set;} = false;
 		public BinaryFormatterWriter(BinaryFormatter bf, Stream stream)
 		{
-			if (!stream.CanWrite) throw new ArgumentException("Stream cannot be written to.");
+			if (  stream == null ) throw new ArgumentNullException("Stream cannot be null.");
+			if ( !stream.CanWrite) throw new ArgumentException("Stream cannot be written to.");
+			this.stream = stream;
 			formatter = bf;
 		}
 

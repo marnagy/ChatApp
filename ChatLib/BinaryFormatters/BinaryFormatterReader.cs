@@ -6,7 +6,7 @@ using System.Text;
 
 namespace ChatLib.BinaryFormatters
 {
-	class BinaryFormatterReader
+	public class BinaryFormatterReader
 	{
 		private readonly BinaryFormatter deformatter;
 		private readonly Stream stream;
@@ -14,7 +14,9 @@ namespace ChatLib.BinaryFormatters
 		public bool IsEmpty => stream.Length == 0;
 		public BinaryFormatterReader(BinaryFormatter bf, Stream stream)
 		{
-			if (!stream.CanWrite) throw new ArgumentException("Stream cannot be written to.");
+			if ( stream == null) throw new ArgumentException("Stream cannot be null.");
+			if (!stream.CanRead) throw new ArgumentException("Stream cannot be written to.");
+			this.stream = stream;
 			deformatter = bf;
 		}
 
