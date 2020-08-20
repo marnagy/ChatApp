@@ -1,9 +1,11 @@
 ﻿using ChatLib;
+using ChatLib.BinaryFormatters;
 using ChatLib.Requests;
 using ChatLib.Responses;
 using System;
 using System.IO;
 using System.Net.Sockets;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 
 using Xamarin.Forms;
@@ -43,12 +45,14 @@ namespace ChatClient
 		private const string AccountCreateSuccessMessage = "You can now sign in.";
 
 		private const string AccountCreateFailTitle = "New account has been created.";
+
+		private const string SignInFailTitle = "Failed to log in.";
 		//private const string AccountCreateFailMessage = "You can now sign in.";
 
 		private readonly App app;
 		private TcpClient client;
-		private BinaryWriter writer;
-		private BinaryReader reader;
+		private BinaryFormatterWriter writer;
+		private BinaryFormatterReader reader;
 		private long sessionID;
 
 		//private string emailLabelText = "E-mail";
@@ -66,16 +70,13 @@ namespace ChatClient
 		{
 			this.app = app;
 			InitializeComponent();
-			client = new TcpClient(AddressFamily.InterNetwork);
-			client.Connect(hostname, defaultPort);
-			writer = new BinaryWriter(client.GetStream());
-			reader = new BinaryReader(client.GetStream());
-			sessionID = reader.ReadInt64();
+			client = Connection.Connect(hostname, defaultPort, ref writer, ref reader);
+			sessionID = (long)reader.Read();
 		}
 
 		private void newAccountBtn_Clicked(object sender, EventArgs e)
 		{
-			//loginBtn.IsVisible = false;
+			loginBtn.IsVisible = false;
 			emailEntry.IsVisible = true;
 			emailLabel.IsVisible = true;
 			btnGrid.IsVisible = false;
@@ -84,41 +85,43 @@ namespace ChatClient
 
 		private void loginBtn_Clicked(object sender, EventArgs e)
 		{
-			//Task.Run(() => {
-			//	indicator.IsVisible = true;
-			//	indicator.IsRunning = true;
-			//});
 			indicator.IsVisible = true;
 			indicator.IsRunning = true;
-			Task.Run(() => {
+			//Task.Run(() => {
 				try{
 					if (!client.Connected)
 					{
-						client.Connect(hostname, defaultPort);
-						var writer = new BinaryWriter(client.GetStream());
-						var reader = new BinaryReader(client.GetStream());
-						long sessionID = reader.ReadInt64();
+						client = Connection.Connect(hostname, defaultPort, ref writer, ref reader);
+						sessionID = (long)reader.Read();
 					}
 					var username = usernameEntry.Text.Trim().ToUsername();
 					var password = passwordEntry.Text.ToPassword();
 
 					SignInRequest req = new SignInRequest(username, password, sessionID);
-					req.Send(writer);
+					writer.Write(req);
+					//req.Send(writer);
 
-					if ( reader.ReadInt64() == sessionID )
+					Response resp = (Response)reader.Read();
+					if ( resp.SessionID == sessionID )
 					{
-						switch ((ResponseType)Enum.Parse(typeof(ResponseType), reader.ReadString()))
+						//switch ((ResponseType)Enum.Parse(typeof(ResponseType), (string)reader.Read()))
+						switch ( resp.Type )
 						{
-							case ResponseType.AccountInfo:
-								break;
-							case ResponseType.Fail:
-								FailResponse resp = FailResponse.Read(reader, sessionID);
-								DisplayAlert(AccountCreateFailTitle, resp.Reason, DefaultCancel);
+						case ResponseType.AccountInfo:
+							AccountInfoResponse AIResp = (AccountInfoResponse)resp; //.Read(reader, sessionID);
+							app.MainPage = new HomePage(app, AIResp);
+							break;
+						case ResponseType.Fail:
+								FailResponse FResp = (FailResponse)resp; //.Read(reader, sessionID);
+								DisplayAlert(SignInFailTitle, FResp.Reason, DefaultCancel);
 								break;
 							default:
 								throw new InvalidResponseException();
-								break;
 						}
+					}
+					else
+					{
+						Connection.Disconnect(ref client, ref reader, ref writer);
 					}
 					//app.MainPage = new HomePage(app);
 				}
@@ -128,15 +131,17 @@ namespace ChatClient
 				}
 				catch(InvalidResponseException)
 				{
-					DisplayAlert(ResponseErrorTitle, ResponseErrorMessage, DefaultCancel);
+
+					//Task.Run( () =>
+						DisplayAlert(ResponseErrorTitle, ResponseErrorMessage, DefaultCancel);
+					//);
 				}
 				finally
 				{
 					indicator.IsVisible = false;
 					indicator.IsRunning = false;
 				}
-			});
-
+			//});
 		}
 
 		private void createAccountBtn_Clicked(object sender, EventArgs e)
@@ -147,10 +152,8 @@ namespace ChatClient
 				try{
 					if (!client.Connected)
 					{
-						client.Connect(hostname, defaultPort);
-						var writer = new BinaryWriter(client.GetStream());
-						var reader = new BinaryReader(client.GetStream());
-						long sessionID = reader.ReadInt64();
+						client = Connection.Connect(hostname, defaultPort, ref writer, ref reader);
+						sessionID = (long)reader.Read();
 					}
 					NewAccountRequest req = default;
 					var email = emailEntry.Text.Trim();
@@ -168,18 +171,18 @@ namespace ChatClient
 					//}
 					req = new NewAccountRequest(email.ToEmail(),
 						username.ToUsername(), passwd.ToPassword(), sessionID);
-					req.Send(writer);
+					writer.Write(req);
+					//req.Send(writer);
 
-					//if (reader.ReadInt64() != sessionID)
-					//{
-					//	throw new InvalidSessionIDException();
-					//}
-					if (reader.ReadInt64() == sessionID)
+					Response resp = (Response)reader.Read();
+					if ( resp.SessionID == sessionID)
 					{
-						switch ((ResponseType)Enum.Parse(typeof(ResponseType), reader.ReadString()))
+						//switch ((ResponseType)Enum.Parse(typeof(ResponseType), (string)reader.Read()))
+						switch (resp.Type)
 						{
 							case ResponseType.Success:
 								emailLabel.IsVisible = false;
+								emailEntry.Text = "";
 								emailEntry.IsVisible = false;
 								btnStack.IsVisible = false;
 								btnGrid.IsVisible = true;
@@ -189,16 +192,14 @@ namespace ChatClient
 								DisplayAlert(AccountCreateSuccessTitle, AccountCreateSuccessMessage, DefaultCancel);
 								break;
 							case ResponseType.Fail:
-								FailResponse resp = FailResponse.Read(reader, sessionID);
-								DisplayAlert(AccountCreateFailTitle, resp.Reason, DefaultCancel);
+								FailResponse FResp = (FailResponse)resp; //.Read(reader, sessionID);
+								DisplayAlert(AccountCreateFailTitle, FResp.Reason, DefaultCancel);
 								break;
 						}
 					}
 					else
 					{
-						client = null;
-						writer = null;
-						reader = null;
+						Connection.Disconnect(ref client, ref reader, ref writer);
 					}
 				}
 				catch(SocketException)
