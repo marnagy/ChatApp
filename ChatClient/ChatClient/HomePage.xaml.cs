@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ChatLib.Responses;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +14,7 @@ namespace ChatClient
 	public partial class HomePage : ContentPage
 	{
 		private readonly App app;
-		public HomePage(App app)
+		public HomePage(App app, AccountInfoResponse aiResp)
 		{
 			this.app = app;
 			InitializeComponent();
