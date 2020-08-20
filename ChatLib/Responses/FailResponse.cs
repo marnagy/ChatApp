@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ChatLib.BinaryFormatters;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
@@ -6,25 +7,31 @@ using System.Text;
 
 namespace ChatLib.Responses
 {
+	[Serializable]
 	public class FailResponse : Response
 	{
+		private const string ReasonSerializationName = "Reason";
 		private const ResponseType type = ResponseType.Fail;
 		public readonly string Reason;
 		public FailResponse(string reason, long sessionID) : base(type, sessionID)
 		{
 			this.Reason = reason;
 		}
-
-		public static FailResponse Read(BinaryReader reader, long sessionID)
+		public FailResponse(SerializationInfo info, StreamingContext context) : base(LoadParentAttributes(info, context))
 		{
-			return new FailResponse(reader.ReadString(), sessionID);
+			Reason = (string)info.GetValue( ReasonSerializationName, typeof(string));
+		}
+
+		public static FailResponse Read(BinaryFormatterReader reader, long sessionID)
+		{
+			return new FailResponse( (string)reader.Read(), sessionID);
 		}
 
 		public override void GetObjectData(SerializationInfo info, StreamingContext context)
 		{
-			info.AddValue("SessionID", SessionID);
-			info.AddValue("Type", Type);
-			info.AddValue("Reason", Reason);
+			info.AddValue( SessionIDSerializationName, SessionID);
+			info.AddValue( TypeSerializationName, Type);
+			info.AddValue( ReasonSerializationName, Reason);
 		}
 	}
 }

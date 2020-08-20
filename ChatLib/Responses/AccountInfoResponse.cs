@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ChatLib.BinaryFormatters;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
@@ -6,6 +7,7 @@ using System.Text;
 
 namespace ChatLib.Responses
 {
+	[Serializable]
 	public sealed class AccountInfoResponse : Response
 	{
 		private const ResponseType type = ResponseType.AccountInfo;
@@ -17,6 +19,13 @@ namespace ChatLib.Responses
 			if (simpleChats == null || groupChats == null) throw new ArgumentNullException();
 			SimpleChats = simpleChats;
 			GroupChats = groupChats;
+		}
+
+		public static AccountInfoResponse Read(BinaryFormatterReader reader, long sessionID)
+		{
+			ChatInfo[] SimpleChats = (ChatInfo[])reader.Read();
+			ChatInfo[] GroupChats = (ChatInfo[])reader.Read();
+			return new AccountInfoResponse( SimpleChats, GroupChats, sessionID);
 		}
 
 		public override void GetObjectData(SerializationInfo info, StreamingContext context)
