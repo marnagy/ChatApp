@@ -51,6 +51,7 @@ namespace ChatServer
 			usersDir = masterDir.CreateSubdirectory(usersDirName);
 			chatsDir = masterDir.CreateSubdirectory(chatsDirName);
 			groupChatsDir = masterDir.CreateSubdirectory(groupChatsDirName);
+			Console.WriteLine("Database loaded.");
 		}
 		public static FileSystemDatabase Initialize()
 		{
