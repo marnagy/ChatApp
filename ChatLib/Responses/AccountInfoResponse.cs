@@ -1,17 +1,39 @@
-﻿using System;
+﻿using ChatLib.BinaryFormatters;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace ChatLib.Responses
 {
-	public struct AccountInfoResponse : IResponse
+	[Serializable]
+	public sealed class AccountInfoResponse : Response
 	{
-		private readonly long sessionID;
-		
-		public void Send(BinaryWriter writer)
+		private const ResponseType type = ResponseType.AccountInfo;
+		public readonly ChatInfo[] SimpleChats;
+		public readonly ChatInfo[] GroupChats;
+		public AccountInfoResponse(ChatInfo[] simpleChats, ChatInfo[] groupChats,
+			long sessionID) : base(type, sessionID)
 		{
-			throw new NotImplementedException();
+			if (simpleChats == null || groupChats == null) throw new ArgumentNullException();
+			SimpleChats = simpleChats;
+			GroupChats = groupChats;
+		}
+
+		public static AccountInfoResponse Read(BinaryFormatterReader reader, long sessionID)
+		{
+			ChatInfo[] SimpleChats = (ChatInfo[])reader.Read();
+			ChatInfo[] GroupChats = (ChatInfo[])reader.Read();
+			return new AccountInfoResponse( SimpleChats, GroupChats, sessionID);
+		}
+
+		public override void GetObjectData(SerializationInfo info, StreamingContext context)
+		{
+			info.AddValue("SessionID", SessionID);
+			info.AddValue("Type", Type);
+			info.AddValue("SimpleChats", SimpleChats);
+			info.AddValue("GroupChats", GroupChats);
 		}
 	}
 }

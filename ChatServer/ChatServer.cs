@@ -12,6 +12,8 @@ using System.IO;
 using System.Threading;
 using ChatLib.Requests;
 using ChatLib.Responses;
+using ChatLib.BinaryFormatters;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace ChatServer
 {
@@ -29,7 +31,8 @@ namespace ChatServer
 		private bool killDB = false;
 		//private readonly Queue<(ServerSession, IDatabaseRequest)> databaseRequests = new Queue<(ServerSession, IDatabaseRequest)>();
 		
-		private readonly ConcurrentDictionary<string, BinaryWriter> writersPerUsername = new ConcurrentDictionary<string, BinaryWriter>();
+		private readonly ConcurrentDictionary<string, BinaryFormatterWriter>
+			writersPerUsername = new ConcurrentDictionary<string, BinaryFormatterWriter>();
 		private readonly HashSet<long> activeSessions = new HashSet<long>();
 
 		private readonly IDatabase database;
@@ -95,7 +98,7 @@ namespace ChatServer
 
 			//Console.WriteLine("Database initialized.");
 
-			long sessionID = 0;
+			long sessionID = 1;
 			TcpClient client;
 			listener.Start();
 			long currSessionID;
@@ -130,36 +133,45 @@ namespace ChatServer
 			public bool? addUserResult = null;
 			public bool? loginResult = null;
 
-			private readonly BinaryReader br;
-			BinaryWriter bw;
+			private readonly BinaryFormatterReader br;
+			BinaryFormatterWriter bw;
 			internal ServerSession(TcpClient client, ChatServer server, long sessionID)
 			{
 				this.sessionID = sessionID;
 				this.server = server;
 				this.client = client;
-				br = new BinaryReader(client.GetStream());
-				bw = new BinaryWriter(client.GetStream());
+				var bf = new BinaryFormatter();
+				var stream = client.GetStream();
+				if (stream == null)
+				{
+					throw new NullReferenceException();
+				}
+				br = new BinaryFormatterReader(bf, stream);
+				bw = new BinaryFormatterWriter(bf, stream);
 			}
 			internal void HandleConnection()
 			{
-				bw.Write(sessionID);
-				bw.Flush();
-
-				IResponse resp;
-				while (!loggedIn)
+				try
 				{
-					resp = null;
-					if (br.ReadInt64() != sessionID)
-					{
-						return;
-					}
+					bw.Write(sessionID);
 
-					switch ((RequestType)Enum.Parse(typeof(RequestType), br.ReadString()))
+					Response resp;
+					Request req;
+					bool success; string reason;
+					while (!loggedIn)
 					{
-						case RequestType.NewAccount:
-							{
-								NewAccountRequest req = NewAccountRequest.Read(br, sessionID);
-								var (success, reason) = server.database.AddUser(req.email, req.username, req.password);
+						req = (Request)br.Read();
+						if ( req.SessionID != sessionID)
+						{
+							return;
+						}
+
+						//switch ((RequestType)Enum.Parse(typeof(RequestType), (string)br.Read()))
+						switch ( req.Type )
+						{
+							case RequestType.NewAccount:
+								NewAccountRequest NAReq = (NewAccountRequest)req; //.Read(br, sessionID);
+								(success, reason) = server.database.AddUser(NAReq.email, NAReq.username, NAReq.password);
 								if (success)
 								{
 									resp = new SuccessResponse(sessionID);
@@ -168,33 +180,49 @@ namespace ChatServer
 								{
 									resp = new FailResponse(reason, sessionID);
 								}
-							}
-							break;
-						case RequestType.SignIn:
-							{
-								SignInRequest req = SignInRequest.Read(br, sessionID);
-								var (success, reason) = server.database.SignIn(req.username, req.password);
+								break;
+							case RequestType.SignIn:
+								SignInRequest SIReq = (SignInRequest)req; //SignInRequest.Read(br, sessionID);
+								(success, reason) = server.database.SignIn(SIReq.username, SIReq.password);
 								if (success)
 								{
-									resp = GetAccountInfo(req.username);
+									resp = GetAccountInfo(SIReq.username);
+									loggedIn = true;
 								}
-							}
-							break;
-						default:
-							break;
+								else
+								{
+									resp = new FailResponse(reason, sessionID);
+								}
+								break;
+							default:
+								resp = new FailResponse("Unknown request detected.", sessionID);
+								break;
+						}
+
+						req = null;
+
+						if (resp != null)
+						{
+							bw.Write(resp);
+							//resp.Send(bw);
+
+							resp = null;
+
+						}
 					}
-					if (resp != null)
-					{
-						resp.Send(bw);
-					}
+					// logged in
 				}
+				catch (EndOfStreamException)
+				{
 
-
+				}
 			}
 
 			private AccountInfoResponse GetAccountInfo(Username username)
 			{
-				throw new NotImplementedException();
+				var simpleChats = server.database.GetChats(username, ChatType.Simple);
+				var groupChats = server.database.GetChats(username, ChatType.Group);
+				return new AccountInfoResponse(simpleChats, groupChats, sessionID);
 			}
 		}
 		

@@ -21,6 +21,7 @@ namespace ChatServer
 		private const string infoFileName = ".info";
 		private const string chatInfoFileName = ".chInfo";
 		private const string groupChatInfoFileName = ".gchInfo";
+		private const string IDFileName = ".msgid";
 
 		public const char simpleChatSeparator = ' ';
 
@@ -50,6 +51,7 @@ namespace ChatServer
 			usersDir = masterDir.CreateSubdirectory(usersDirName);
 			chatsDir = masterDir.CreateSubdirectory(chatsDirName);
 			groupChatsDir = masterDir.CreateSubdirectory(groupChatsDirName);
+			Console.WriteLine("Database loaded.");
 		}
 		public static FileSystemDatabase Initialize()
 		{
@@ -58,8 +60,8 @@ namespace ChatServer
 
 			using (var writer = new StreamWriter(File.Create(Path.Combine(db.masterDir.FullName, infoFileName))))
 			{
-				var dt = DateTime.Now;
-				writer.Write($"Created on {dt.Day}.{dt.Month}.{dt.Year} at {dt.Hour}:{dt.Minute}.");
+				var dt = DateTime.UtcNow;
+				writer.WriteLine($"Created:{dt}");
 			}
 
 			db.LoadUsernamesAndEmails();
@@ -79,15 +81,52 @@ namespace ChatServer
 		private bool _initialized = false;
 		public bool initialized { get => _initialized; }
 
-		public bool AddMessage(ChatInfo chatInfo, IMessage msg)
+		public (bool success, string ReasonOrID) AddMessage(ChatInfo info, Message message)
 		{
-			throw new NotImplementedException();
+			lock (this)
+			{
+				switch (message.Type)
+				{
+					case MessageType.TextMessage:
+						TextMessage msg = (TextMessage)message;
+						var currChatDirPath = GetChatDir(info);
+						var dt = DateTime.UtcNow;
+						var chatsOfDay = string.Format("{0:D4}-{1:D2}-{2:D2}", dt.Year, dt.Month, dt.Day);
+						string currentMsgID = File.ReadAllText(Path.Combine(currChatDirPath, IDFileName));
+						if (long.TryParse(currentMsgID, out long MsgID))
+						{
+							// save message to 
+							using (var writer = File.AppendText(Path.Combine(currChatDirPath, chatsOfDay)))
+							{
+								/* RESEARCH ON XML */
+							}
+							File.WriteAllText(Path.Combine(currChatDirPath, IDFileName), (++MsgID).ToString());
+							return (true, MsgID.ToString());
+						}
+						else
+						{
+							return (false, "Unsupported messageID format.");
+						}
+					default:
+						return (false, "Unsupported message type.");
+				}
+			}
 		}
-
-		//public MessageRecord AddMessage
-		public bool AddMessage()
+		private string GetChatDir(ChatInfo info)
 		{
-			throw new NotImplementedException();
+			switch (info.Type)
+			{
+				case ChatType.Simple:
+					return Directory.CreateDirectory(
+						Path.Combine(chatsDir.FullName, info.ID)).FullName;
+					break;
+				case ChatType.Group:
+					return Directory.CreateDirectory(
+						Path.Combine( groupChatsDir.FullName, info.ID)).FullName;
+					break;
+				default:
+					throw new FormatException("Unsupported chat type.");
+			}
 		}
 
 		public bool Connect()
@@ -104,7 +143,7 @@ namespace ChatServer
 			return true;
 		}
 
-		public (bool success, string ReasonOrName) CreateChat(User user1, User user2, IMessage msg)
+		public (bool success, string ReasonOrName) CreateChat(User user1, User user2, Message msg)
 		{
 			string chatName = GetChatName(user1, user2);
 			lock (this)
@@ -120,18 +159,28 @@ namespace ChatServer
 					}
 				}
 
+				// create chat dir
 				var chatDirInfo = chatsDir.CreateSubdirectory(chatName);
-
+				// create info file for chat
 				using (var writer = File.CreateText(Path.Combine(chatDirInfo.FullName, infoFileName)))
 				{
 					var dt = DateTime.UtcNow;
 					writer.WriteLine(dt);
-					writer.write
+
+					writer.WriteLine(user1.username + " " + 0);
+					writer.WriteLine(user2.username + " " + 0);
 				}
 
+				AddFirstMessage();
 			}
 			return (true,chatName);
 		}
+
+		private void AddFirstMessage()
+		{
+			throw new NotImplementedException();
+		}
+
 		private (string name, long messageID) GetSimpleChatInfo(string line)
 		{
 			if (line == null) throw new ArgumentNullException();
@@ -313,6 +362,9 @@ namespace ChatServer
 			}
 		}
 
-
+		public ChatInfo[] GetChats(Username username, ChatType type)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }
