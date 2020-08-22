@@ -19,7 +19,7 @@ namespace ChatServer
 		private const string chatsDirName = "chats";
 		private const string groupChatsDirName = "group_chats";
 		private const string infoFileName = ".info";
-		private const string chatInfoFileName = ".chInfo";
+		private const string simpleChatInfoFileName = ".chInfo";
 		private const string groupChatInfoFileName = ".gchInfo";
 		private const string IDFileName = ".msgid";
 
@@ -33,7 +33,7 @@ namespace ChatServer
 
 		private readonly DirectoryInfo masterDir;
 		private readonly DirectoryInfo usersDir;
-		private readonly DirectoryInfo chatsDir;
+		private readonly DirectoryInfo simpleChatsDir;
 		private readonly DirectoryInfo groupChatsDir;
 
 		private readonly RNGCryptoServiceProvider random = new RNGCryptoServiceProvider();
@@ -52,7 +52,7 @@ namespace ChatServer
 		{
 			masterDir = Directory.CreateDirectory(Path.Combine(masterDirName));
 			usersDir = masterDir.CreateSubdirectory(usersDirName);
-			chatsDir = masterDir.CreateSubdirectory(chatsDirName);
+			simpleChatsDir = masterDir.CreateSubdirectory(chatsDirName);
 			groupChatsDir = masterDir.CreateSubdirectory(groupChatsDirName);
 			Console.WriteLine("Database loaded.");
 		}
@@ -121,7 +121,7 @@ namespace ChatServer
 			{
 				case ChatType.Simple:
 					return Directory.CreateDirectory(
-						Path.Combine(chatsDir.FullName, info.ID.ToString())).FullName;
+						Path.Combine(simpleChatsDir.FullName, info.ID.ToString())).FullName;
 					break;
 				case ChatType.Group:
 					return Directory.CreateDirectory(
@@ -260,25 +260,31 @@ namespace ChatServer
 				{
 					// simple chat
 					var chatID = GetChatID(users[0], users[1]);
-					var chatDir = chatsDir.CreateSubdirectory(chatID.ToString());
+					var chatDir = simpleChatsDir.CreateSubdirectory(chatID.ToString());
 
 					var info = new ChatInfo(ChatType.Simple, chatID, SimpleChatDefaultFileName(users[0], users[1]), users);
 
 					using ( var infoFile = new StreamWriter( File.Create( Path.Combine(chatDir.FullName, infoFileName) ) ) )
 					{
-						infoFile.WriteLine( info.ID.ToString() );
+						infoFile.WriteLine(info.Name);
 						foreach (var username in info.participants)
 						{
 							infoFile.WriteLine( username.ToString() );
 						}
 					}
+
+					foreach (var username in users)
+					{
+						AddChat(info.Type, chatID, username);
+					}
+
 					return (true, info, string.Empty);
 				}
 				else if ( users.Length > 2)
 				{
 					// group chat
 					var chatID = GetChatID(users);
-					var chatDir = chatsDir.CreateSubdirectory(chatID.ToString());
+					var chatDir = simpleChatsDir.CreateSubdirectory(chatID.ToString());
 
 					var info = new ChatInfo(ChatType.Group, chatID, GroupChatDefaultFileName(users), users);
 
@@ -297,6 +303,22 @@ namespace ChatServer
 					return (false, null, "Insufficient number of users.");
 				}
 			}
+		}
+
+		private void AddChat(ChatType type, long chatID, Username username)
+		{
+			switch (type)
+			{
+				case ChatType.Simple:
+					File.AppendAllText(Path.Combine(usersDir.FullName, username.ToString(), simpleChatInfoFileName), chatID + "\n");
+					break;
+				case ChatType.Group:
+					File.AppendAllText(Path.Combine(usersDir.FullName, username.ToString(), groupChatInfoFileName), chatID + "\n");
+					break;
+				default:
+					throw new ArgumentException("Invalid chat type");
+			}
+			
 		}
 
 		private string GroupChatDefaultFileName(Username[] users)
@@ -362,7 +384,7 @@ namespace ChatServer
 
 		private void CreateChatList(DirectoryInfo userDir)
 		{
-			File.CreateText(Path.Combine(userDir.FullName, chatInfoFileName));
+			File.CreateText(Path.Combine(userDir.FullName, simpleChatInfoFileName));
 		}
 
 		private void CreateUserInfo(DirectoryInfo userDir, Email email, Password password)
@@ -464,7 +486,33 @@ namespace ChatServer
 
 		public ChatInfo[] GetChats(Username username, ChatType type)
 		{
-			throw new NotImplementedException();
+			List<ChatInfo> list = new List<ChatInfo>();
+			lock (this)
+			{
+				string fileName;
+				DirectoryInfo chatsDir;
+				switch (type)
+				{
+					case ChatType.Simple:
+						fileName = simpleChatInfoFileName;
+						chatsDir = simpleChatsDir;
+						break;
+					case ChatType.Group:
+						fileName = groupChatInfoFileName;
+						chatsDir = groupChatsDir;
+						break;
+					default:
+						throw new ArgumentException();
+				}
+				var chatIDs = File.ReadAllLines(Path.Combine(usersDir.FullName, username.ToString(), fileName));
+
+				foreach (var ID in chatIDs)
+				{
+					list.Add( ChatInfo.FromDictionary(type, Directory.CreateDirectory(Path.Combine(chatsDir.FullName, ID) ), infoFileName ) );
+				}
+
+				return list.ToArray();
+			}
 		}
 	}
 }
