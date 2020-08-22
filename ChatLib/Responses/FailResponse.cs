@@ -10,7 +10,6 @@ namespace ChatLib.Responses
 	[Serializable]
 	public class FailResponse : Response
 	{
-		private const string ReasonSerializationName = "Reason";
 		private const ResponseType type = ResponseType.Fail;
 		public readonly string Reason;
 		public FailResponse(string reason, long sessionID) : base(type, sessionID)
