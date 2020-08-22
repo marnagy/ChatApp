@@ -29,6 +29,8 @@ namespace ChatServer
 		private const int hashKey = 20;
 		private const int hashIterations = 20_000;
 
+		private readonly Random rand = new Random();
+
 		private readonly DirectoryInfo masterDir;
 		private readonly DirectoryInfo usersDir;
 		private readonly DirectoryInfo chatsDir;
@@ -41,7 +43,8 @@ namespace ChatServer
 		private readonly HashSet<Email> allEmails = new HashSet<Email>();
 		private readonly HashSet<Username> allUsernames = new HashSet<Username>();
 		private readonly HashSet<Username> onlineUsers = new HashSet<Username>();
-		//private readonly Dictionary<Username, Email>
+		private readonly HashSet<long> simpleChatIDs = new HashSet<long>();
+		private readonly HashSet<long> groupChatIDs = new HashSet<long>();
 
 		private ulong groupIDGenerator = 0;
 
@@ -118,11 +121,11 @@ namespace ChatServer
 			{
 				case ChatType.Simple:
 					return Directory.CreateDirectory(
-						Path.Combine(chatsDir.FullName, info.ID)).FullName;
+						Path.Combine(chatsDir.FullName, info.ID.ToString())).FullName;
 					break;
 				case ChatType.Group:
 					return Directory.CreateDirectory(
-						Path.Combine( groupChatsDir.FullName, info.ID)).FullName;
+						Path.Combine( groupChatsDir.FullName, info.ID.ToString())).FullName;
 					break;
 				default:
 					throw new FormatException("Unsupported chat type.");
@@ -143,38 +146,47 @@ namespace ChatServer
 			return true;
 		}
 
-		public (bool success, string ReasonOrName) CreateChat(User user1, User user2, Message msg)
-		{
-			string chatName = GetChatName(user1, user2);
-			lock (this)
-			{
-				string simpleChatName;
-				foreach (var item in File.ReadLines(Path.Combine(
-					usersDir.FullName, user1.username.ToString(), chatInfoFileName)))
-				{
-					(simpleChatName, _) = GetSimpleChatInfo(item);
-					if (chatName == simpleChatName)
-					{
-						return (false, "Chat already exists.");
-					}
-				}
+		//public (bool success, string ReasonOrName) CreateChat(Username[] users, Message msg)
+		//{
+		//	if (users.Length == 2)
+		//	{
+		//		var user1 = users[0];
+		//		var user2 = users[1];
+		//		long chatID = GetChatID(user1, user2);
+		//		lock (this)
+		//		{
+		//			string simpleChatName;
+		//			foreach (var item in File.ReadLines(Path.Combine(
+		//				usersDir.FullName, user1.ToString(), chatInfoFileName)))
+		//			{
+		//				(simpleChatName, _) = GetSimpleChatInfo(item);
+		//				if (chatName == simpleChatName)
+		//				{
+		//					return (false, "Chat already exists.");
+		//				}
+		//			}
 
-				// create chat dir
-				var chatDirInfo = chatsDir.CreateSubdirectory(chatName);
-				// create info file for chat
-				using (var writer = File.CreateText(Path.Combine(chatDirInfo.FullName, infoFileName)))
-				{
-					var dt = DateTime.UtcNow;
-					writer.WriteLine(dt);
+		//			// create chat dir
+		//			var chatDirInfo = chatsDir.CreateSubdirectory(chatName);
+		//			// create info file for chat
+		//			using (var writer = File.CreateText(Path.Combine(chatDirInfo.FullName, infoFileName)))
+		//			{
+		//				var dt = DateTime.UtcNow;
+		//				writer.WriteLine(dt);
 
-					writer.WriteLine(user1.username + " " + 0);
-					writer.WriteLine(user2.username + " " + 0);
-				}
+		//				writer.WriteLine(user1 + " " + 0);
+		//				writer.WriteLine(user2 + " " + 0);
+		//			}
 
-				AddFirstMessage();
-			}
-			return (true,chatName);
-		}
+		//			AddFirstMessage();
+		//		}
+		//		return (true,chatName);
+		//	}
+		//	else
+		//	{
+		//		throw new NotImplementedException();
+		//	}
+		//	}
 
 		private void AddFirstMessage()
 		{
@@ -194,28 +206,116 @@ namespace ChatServer
 				throw new FormatException("Wrong format of stored info about chat.");
 			}
 		}
-		private string GetChatName(User user1, User user2)
+		private long GetChatID(Username user1, Username user2)
 		{
-			if (user1.username.CompareTo(user2.username) > 0)
+			lock (simpleChatIDs)
 			{
-				return user1.username + simpleChatSeparator.ToString() + user2.username;
+				long id = GetRandomLong();
+				while ( simpleChatIDs.Contains(id) )
+				{
+					id = GetRandomLong();
+				}
+				simpleChatIDs.Add(id);
+				return id;
 			}
-			return user2.username + simpleChatSeparator.ToString() + user1.username;
 		}
 
-		public string CreateChat(User[] users)
+		private long GetChatID(Username[] users)
 		{
-			//ulong groupID = groupIDGenerator++;
-			//var groupDir = groupChatsDir.CreateSubdirectory(groupID.ToString());
-			//using (var writer = File.CreateText(Path.Combine(groupDir.FullName, infoFileName)))
-			//{
-			//	foreach(User user in users)
-			//	{
-			//		writer.WriteLine(user.username);
-			//	}
-			//}
+			lock (groupChatIDs)
+			{
+				long id = GetRandomLong();
+				while ( groupChatIDs.Contains(id) )
+				{
+					id = GetRandomLong();
+				}
+				groupChatIDs.Add(id);
+				return id;
+			}
+		}
 
-			throw new NotImplementedException();
+		private long GetRandomLong() {
+			long result = (long)rand.Next(int.MinValue, int.MaxValue);
+			result = result << 32;
+			result = result | (long)rand.Next(int.MinValue, int.MaxValue);
+			return result;
+		}
+
+		public (bool success, ChatInfo info, string reasonOrName) CreateChat(Username[] users)
+		{
+			lock (allUsernames)
+			{
+				foreach (var user in users)
+				{
+					if ( !allUsernames.Contains(user))
+					{
+						return (false, null, "A username does not exist.");
+					}
+				}
+			}
+
+			lock (this)
+			{
+				if (users.Length == 2)
+				{
+					// simple chat
+					var chatID = GetChatID(users[0], users[1]);
+					var chatDir = chatsDir.CreateSubdirectory(chatID.ToString());
+
+					var info = new ChatInfo(ChatType.Simple, chatID, SimpleChatDefaultFileName(users[0], users[1]), users);
+
+					using ( var infoFile = new StreamWriter( File.Create( Path.Combine(chatDir.FullName, infoFileName) ) ) )
+					{
+						infoFile.WriteLine( info.ID.ToString() );
+						foreach (var username in info.participants)
+						{
+							infoFile.WriteLine( username.ToString() );
+						}
+					}
+					return (true, info, string.Empty);
+				}
+				else if ( users.Length > 2)
+				{
+					// group chat
+					var chatID = GetChatID(users);
+					var chatDir = chatsDir.CreateSubdirectory(chatID.ToString());
+
+					var info = new ChatInfo(ChatType.Group, chatID, GroupChatDefaultFileName(users), users);
+
+					using ( var infoFile = new StreamWriter( File.Create( Path.Combine(chatDir.FullName, infoFileName) ) ) )
+					{
+						infoFile.WriteLine( info.ID.ToString() );
+						foreach (var username in info.participants)
+						{
+							infoFile.WriteLine( username.ToString() );
+						}
+					}
+					return (true, info, string.Empty);
+				}
+				else
+				{
+					return (false, null, "Insufficient number of users.");
+				}
+			}
+		}
+
+		private string GroupChatDefaultFileName(Username[] users)
+		{
+			StringBuilder sb = new StringBuilder();
+
+			sb.Append(users[0]);
+			for (int i = 1; i < users.Length; i++)
+			{
+				sb.Append(", ");
+				sb.Append(users[i]);
+			}
+
+			return sb.ToString();
+		}
+
+		private string SimpleChatDefaultFileName(Username username1, Username username2)
+		{
+			return username1.ToString() + "," + username2.ToString();
 		}
 
 		public IEnumerable<Username> GetUsers()
@@ -318,7 +418,7 @@ namespace ChatServer
 							return (false, signInFailMssg);
 						}
 					}
-					return (true, "");
+					return (true, string.Empty);
 				}
 				else
 				{

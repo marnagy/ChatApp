@@ -17,16 +17,15 @@ namespace ChatServer.Databases
 		/// <summary>
 		/// Creates new chat of 2 users
 		/// </summary>
-		/// <param name="user1"></param>
-		/// <param name="user2"></param>
+		/// <param name="users">All usernames in chat. First Being the creator of chat.</param>
 		/// <returns>ValueTuple of success and name of created chat if success.</returns>
-		(bool success, string ReasonOrName) CreateChat(User user1, User user2, Message msg);
+		//(bool success, string ReasonOrName) CreateChat(Username[] users, Message msg);
 		/// <summary>
 		/// Method to initialize group chat.
 		/// </summary>
 		/// <param name="users">Participants of the group chat.</param>
 		/// <returns>Name of chat identifier.</returns>
-		string CreateChat(User[] users);
+		(bool success, ChatInfo info, string reasonOrName) CreateChat(Username[] users);
 		/// <summary>
 		/// Checks if there exists user with the given username
 		/// </summary>
