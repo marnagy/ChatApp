@@ -6,15 +6,32 @@
              mc:Ignorable="d"
              x:Class="ChatClient.HomePage">
 	<ContentPage.Content>
-		<ListView ItemsSource=""
-				  ItemTapped="ListView_ItemTapped">
-			<ListView.ItemTemplate>
-				<DataTemplate>
-					<ViewCell>
-						
-					</ViewCell>
-				</DataTemplate>
-			</ListView.ItemTemplate>
-		</ListView>
+		<StackLayout Orientation="Vertical">
+			<!--ItemsSource="{Binding chats}"-->
+			<ListView x:Name="listView" 
+					  ItemTapped="ListView_ItemTapped"
+					  HorizontalOptions="FillAndExpand" VerticalOptions="StartAndExpand">
+				<ListView.ItemTemplate>
+					<DataTemplate>
+						<TextCell Text="{Binding Value.ID}" Detail="{Binding }"/>
+					</DataTemplate>
+				</ListView.ItemTemplate>
+			</ListView>
+			<Grid Visual="Material">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto"/>
+				</Grid.RowDefinitions>
+				<Button x:Name="newChatBtn" Text="Start New Chat"
+						Clicked="newChat_Click" Grid.Column="0"
+						Visual="Material"/>
+				<Button x:Name="newGroupChatBtn" Text="Start New Group Chat"
+						Clicked="newGroupChat_Click" Grid.Column="1"
+						Visual="Material"/>
+			</Grid>
+		</StackLayout>
 	</ContentPage.Content>
 </ContentPage>
