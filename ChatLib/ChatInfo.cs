@@ -5,13 +5,17 @@ using System.Text;
 using System.Runtime.Serialization;
 using ChatLib.Messages;
 using System.Linq;
+using System.Text.RegularExpressions;
+using ChatLib.BinaryFormatters;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace ChatLib
 {
 	[Serializable]
 	public sealed class ChatInfo : ISerializable, IComparable<ChatInfo>
 	{
-		public static readonly DateTime defaultDT = new DateTime(9999,1,1);
+		private static readonly DateTime defaultDT = new DateTime(9999,1,1);
+		private static Regex regex = null;
 
 		public readonly ChatType Type;
 		public readonly long ID;
@@ -100,6 +104,53 @@ namespace ChatLib
 		public int CompareTo(ChatInfo other)
 		{
 			return DateTime.Compare(this.lastMessageTime, other.lastMessageTime);
+		}
+
+		public static ChatInfo FromDictionary(ChatType type, DirectoryInfo directoryInfo, string infoFileName)
+		{
+			List<Username> participants = new List<Username>();
+			
+			var usernames = File.ReadAllLines(Path.Combine(directoryInfo.FullName, infoFileName));
+
+			var name = usernames[0];
+			for (int i = 1; i < usernames.Length; i++)
+			//foreach (var username in usernames)
+			{
+				participants.Add(usernames[i].ToUsername());
+			}
+
+			LoadMessages(directoryInfo);
+
+			return new ChatInfo(type, long.Parse(directoryInfo.Name), name, participants.ToArray() );
+		}
+
+		private static List<Message> LoadMessages(DirectoryInfo directoryInfo)
+		{
+			if (regex == null)
+			{
+				regex = new Regex("^([12][0-9]{3}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]))$");
+			}
+			var result = new List<Message>();
+			var files = new List<FileInfo>(directoryInfo.GetFiles());
+			// filter
+			for (int i = 0; i < files.Count; i++)
+			{
+				if ( !regex.IsMatch(files[i].Name) )
+				{
+					files.RemoveAt(i);
+					i--;
+					continue;
+				}
+			}
+
+			foreach (var file in files)
+			{
+				var bfr = new BinaryFormatterReader( new BinaryFormatter(), File.OpenRead(file.FullName) );
+
+				/* READ MESSAGES FROM FILE HERE */
+			}
+
+			return result;
 		}
 	}
 }
