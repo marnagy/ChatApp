@@ -18,8 +18,8 @@ namespace ChatClient
 	{
 		private readonly App app;
 
-		private readonly ObservableCollection<TextCell> chatViews = new ObservableCollection<TextCell>();
-		private readonly List<ChatInfo> chats = new List<ChatInfo>();
+		private readonly ObservableCollection<ChatInfo> chatViews = new ObservableCollection<ChatInfo>();
+		//private readonly List<ChatInfo> chats = new List<ChatInfo>();
 
 		public HomePage(App app, AccountInfoResponse aiResp)
 		{
@@ -27,11 +27,12 @@ namespace ChatClient
 			InitializeComponent();
 
 			LoadChats(aiResp.SimpleChats, aiResp.GroupChats);
-			listView.ItemsSource = chats;
+			listView.ItemsSource = chatViews;
 		}
 
 		private void LoadChats(ChatInfo[] simpleChats, ChatInfo[] groupChats)
 		{
+			List<ChatInfo> chats = new List<ChatInfo>();
 			foreach (var chat in simpleChats)
 			{
 				chats.Add(chat);
@@ -47,21 +48,22 @@ namespace ChatClient
 			UpdateChatsView(chatViews, chats);
 		}
 
-		private void UpdateChatsView(ObservableCollection<TextCell> chatViews, List<ChatInfo> chats)
+		private void UpdateChatsView(ObservableCollection<ChatInfo> chatViews, List<ChatInfo> chats)
 		{
 			chatViews.Clear();
 
 			foreach (var item in chats)
 			{
-				chatViews.Add( new TextCell{ Text = item.Name, Detail = item.ID.ToString() } );
+				chatViews.Add( item );
+				//chatViews.Add( new TextCell{ Text = item.Name, Detail = item.ID.ToString() } );
 			}
 		}
 
 		private void ListView_ItemTapped(object sender, ItemTappedEventArgs e)
 		{
-			lock (chats)
+			lock (chatViews)
 			{
-				DisplayAlert("Cell tapped!", "Cell: " + chats[e.ItemIndex].ID, "Okay");
+				DisplayAlert("Cell tapped!", "Cell: " + chatViews[e.ItemIndex].ID, "Okay");
 			}
 		}
 

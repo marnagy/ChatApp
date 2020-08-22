@@ -12,6 +12,7 @@ using ChatLib.Requests;
 using ChatLib.Responses;
 using ChatLib.BinaryFormatters;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
 
 namespace ChatServer
 {
@@ -165,8 +166,12 @@ namespace ChatServer
 
 						HandleLoggedInRequests();
 					}
+				} 
+				catch ( EndOfStreamException )
+				{
+
 				}
-				catch (EndOfStreamException)
+				catch (SerializationException)
 				{
 
 				}

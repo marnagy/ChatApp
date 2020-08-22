@@ -13,7 +13,7 @@
 					  HorizontalOptions="FillAndExpand" VerticalOptions="StartAndExpand">
 				<ListView.ItemTemplate>
 					<DataTemplate>
-						<TextCell Text="{Binding Value.ID}" Detail="{Binding }"/>
+						<TextCell Text="{Binding ID}" Detail="{Binding Name}"/>
 					</DataTemplate>
 				</ListView.ItemTemplate>
 			</ListView>
