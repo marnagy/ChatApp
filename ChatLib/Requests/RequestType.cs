@@ -7,6 +7,7 @@ namespace ChatLib.Requests
 	public enum RequestType
 	{
 		NewAccount,
-		SignIn
+		SignIn,
+		NewChat
 	}
 }

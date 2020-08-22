@@ -14,6 +14,7 @@ namespace ChatLib.Requests
 		protected const string EmailSerializationName = "E-mail";
 		protected const string UsernameSerializationName = "Username";
 		protected const string PasswordSerializationName = "Password";
+		protected const string ParticipantsSerializationName = "Participants";
 
 		public readonly RequestType Type;
 		public readonly long SessionID;
