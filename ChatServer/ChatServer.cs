@@ -2,8 +2,6 @@
 using ChatServer.DatabaseRequests;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Net;
 using ChatLib;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -96,8 +94,6 @@ namespace ChatServer
 		{
 			TcpListener listener = new TcpListener(port);
 
-			//Console.WriteLine("Database initialized.");
-
 			long sessionID = 1;
 			TcpClient client;
 			listener.Start();
@@ -133,6 +129,11 @@ namespace ChatServer
 			public bool? addUserResult = null;
 			public bool? loginResult = null;
 
+			Response resp;
+			Request req;
+			ChatInfo info;
+			bool success; string reason;
+
 			private readonly BinaryFormatterReader br;
 			BinaryFormatterWriter bw;
 			internal ServerSession(TcpClient client, ChatServer server, long sessionID)
@@ -155,66 +156,115 @@ namespace ChatServer
 				{
 					bw.Write(sessionID);
 
-					Response resp;
-					Request req;
-					bool success; string reason;
-					while (!loggedIn)
+					
+					while (true)
 					{
-						req = (Request)br.Read();
-						if ( req.SessionID != sessionID)
-						{
-							return;
-						}
+						HandleNonLoggedInRequests();
+						
+						// logged in
 
-						//switch ((RequestType)Enum.Parse(typeof(RequestType), (string)br.Read()))
-						switch ( req.Type )
-						{
-							case RequestType.NewAccount:
-								NewAccountRequest NAReq = (NewAccountRequest)req; //.Read(br, sessionID);
-								(success, reason) = server.database.AddUser(NAReq.email, NAReq.username, NAReq.password);
-								if (success)
-								{
-									resp = new SuccessResponse(sessionID);
-								}
-								else
-								{
-									resp = new FailResponse(reason, sessionID);
-								}
-								break;
-							case RequestType.SignIn:
-								SignInRequest SIReq = (SignInRequest)req; //SignInRequest.Read(br, sessionID);
-								(success, reason) = server.database.SignIn(SIReq.username, SIReq.password);
-								if (success)
-								{
-									resp = GetAccountInfo(SIReq.username);
-									loggedIn = true;
-								}
-								else
-								{
-									resp = new FailResponse(reason, sessionID);
-								}
-								break;
-							default:
-								resp = new FailResponse("Unknown request detected.", sessionID);
-								break;
-						}
-
-						req = null;
-
-						if (resp != null)
-						{
-							bw.Write(resp);
-							//resp.Send(bw);
-
-							resp = null;
-
-						}
+						HandleLoggedInRequests();
 					}
-					// logged in
 				}
 				catch (EndOfStreamException)
 				{
 
+				}
+			}
+
+			private void HandleLoggedInRequests()
+			{
+				while (loggedIn)
+				{
+					req = (Request)br.Read();
+					if ( req.SessionID != sessionID)
+					{
+						return;
+					}
+
+					switch ( req.Type )
+					{
+						case RequestType.NewChat:
+							NewChatRequest NCReq = (NewChatRequest)req;
+							(success, info, reason) = server.database.CreateChat(NCReq.participants);
+
+							if (success)
+							{
+								resp = new ChatCreatedResponse(info, sessionID);
+							}
+							else
+							{
+								resp = new FailResponse(reason, sessionID);
+							}
+							break;
+						default:
+							resp = new FailResponse("Unsupported request type detected.", sessionID);
+							break;
+					}
+
+					req = null;
+
+					if (resp != null)
+					{
+						bw.Write(resp);
+						//resp.Send(bw);
+
+						resp = null;
+					}
+				}
+			}
+
+			private void HandleNonLoggedInRequests()
+			{
+				while (!loggedIn)
+				{
+					req = (Request)br.Read();
+					if ( req.SessionID != sessionID)
+					{
+						return;
+					}
+
+					switch ( req.Type )
+					{
+						case RequestType.NewAccount:
+							NewAccountRequest NAReq = (NewAccountRequest)req; //.Read(br, sessionID);
+							(success, reason) = server.database.AddUser(NAReq.email, NAReq.username, NAReq.password);
+							if (success)
+							{
+								resp = new SuccessResponse(sessionID);
+							}
+							else
+							{
+								resp = new FailResponse(reason, sessionID);
+							}
+							break;
+						case RequestType.SignIn:
+							SignInRequest SIReq = (SignInRequest)req; //SignInRequest.Read(br, sessionID);
+							(success, reason) = server.database.SignIn(SIReq.username, SIReq.password);
+							if (success)
+							{
+								resp = GetAccountInfo(SIReq.username);
+								loggedIn = true;
+							}
+							else
+							{
+								resp = new FailResponse(reason, sessionID);
+							}
+							break;
+						default:
+							resp = new FailResponse("Unsupported request type detected.", sessionID);
+							break;
+					}
+
+					req = null;
+
+					if (resp != null)
+					{
+						bw.Write(resp);
+						//resp.Send(bw);
+
+						resp = null;
+					}
 				}
 			}
 
