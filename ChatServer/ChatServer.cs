@@ -215,6 +215,7 @@ namespace ChatServer
 						//resp.Send(bw);
 
 						resp = null;
+						if (!loggedIn) return;
 					}
 				}
 			}
@@ -269,6 +270,7 @@ namespace ChatServer
 						//resp.Send(bw);
 
 						resp = null;
+						if (loggedIn) return;
 					}
 				}
 			}
