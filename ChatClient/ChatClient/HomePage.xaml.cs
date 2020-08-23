@@ -19,11 +19,16 @@ namespace ChatClient
 		private readonly App app;
 
 		private readonly ObservableCollection<ChatInfo> chatViews = new ObservableCollection<ChatInfo>();
+		private readonly HashSet<Username> simpleChatUsernames = new HashSet<Username>();
+		private readonly long sessionID;
+		private readonly Username myUsername;
 		//private readonly List<ChatInfo> chats = new List<ChatInfo>();
 
-		public HomePage(App app, AccountInfoResponse aiResp)
+		public HomePage(App app, Username username, AccountInfoResponse aiResp, long sessionID)
 		{
 			this.app = app;
+			this.sessionID = sessionID;
+			myUsername = username;
 			InitializeComponent();
 
 			LoadChats(aiResp.SimpleChats, aiResp.GroupChats);
@@ -67,14 +72,15 @@ namespace ChatClient
 			}
 		}
 
-		private void newChat_Click(object sender, EventArgs e)
+		private async void newChat_Click(object sender, EventArgs e)
 		{
-
+			/* CONTINUE DEVELOPMENT HERE */
+			await Navigation.PushAsync( new NewSimpleChatPage() );
 		}
 
 		private void newGroupChat_Click(object sender, EventArgs e)
 		{
-
+			
 		}
 	}
 }
