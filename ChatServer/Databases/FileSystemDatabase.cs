@@ -504,7 +504,20 @@ namespace ChatServer
 					default:
 						throw new ArgumentException();
 				}
-				var chatIDs = File.ReadAllLines(Path.Combine(usersDir.FullName, username.ToString(), fileName));
+
+				// this is ugly, but due to unknown race condition it is (at least for now) needed
+				string[] chatIDs = null;
+				while (chatIDs == null)
+				{
+					try
+					{
+						chatIDs = File.ReadAllLines(Path.Combine(usersDir.FullName, username.ToString(), fileName));
+					}
+					catch (IOException)
+					{
+
+					}
+				}
 
 				foreach (var ID in chatIDs)
 				{
