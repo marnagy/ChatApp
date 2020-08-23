@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ChatClient.NewSimpleChatPage">
+    <ContentPage.Content>
+        <StackLayout Orientation="Horizontal" VerticalOptions="Center">
+			<Entry Placeholder="Enter username here" HorizontalOptions="Fill"
+				   HorizontalTextAlignment="Center"/>
+			<Button Text="Create Chat" Clicked="Button_Clicked"
+					HorizontalOptions="End"/>
+		</StackLayout>
+    </ContentPage.Content>
+</ContentPage>
