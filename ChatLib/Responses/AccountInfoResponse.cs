@@ -20,6 +20,11 @@ namespace ChatLib.Responses
 			SimpleChats = simpleChats;
 			GroupChats = groupChats;
 		}
+		public AccountInfoResponse(SerializationInfo info, StreamingContext context) : base(LoadParentAttributes(info, context))
+		{
+			SimpleChats = (ChatInfo[])info.GetValue( "SimpleChats", typeof(ChatInfo[]));
+			GroupChats = (ChatInfo[])info.GetValue( "GroupChats", typeof(ChatInfo[]));
+		}
 
 		public static AccountInfoResponse Read(BinaryFormatterReader reader, long sessionID)
 		{
