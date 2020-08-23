@@ -32,7 +32,7 @@ namespace ChatLib.Responses
 		}
 		protected static (ResponseType type, long sessionID) LoadParentAttributes(SerializationInfo info, StreamingContext context)
 		{
-			var sessionID = (int)info.GetValue( SessionIDSerializationName, typeof(int));
+			var sessionID = (long)info.GetValue( SessionIDSerializationName, typeof(long));
 			var type = (ResponseType)info.GetValue( TypeSerializationName, typeof(ResponseType));
 			return (type, sessionID);
 		}

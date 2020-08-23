@@ -30,7 +30,7 @@ namespace ChatLib.Requests
 		}
 		protected static (RequestType type, long sessionID) LoadParentAttributes(SerializationInfo info, StreamingContext context)
 		{
-			var sessionID = (int)info.GetValue( SessionIDSerializationName, typeof(int));
+			var sessionID = (long)info.GetValue( SessionIDSerializationName, typeof(long));
 			var type = (RequestType)info.GetValue( TypeSerializationName, typeof(RequestType));
 			return (type, sessionID);
 		}
