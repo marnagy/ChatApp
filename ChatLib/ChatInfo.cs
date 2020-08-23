@@ -65,11 +65,11 @@ namespace ChatLib
 			//info.AddValue("Participants", participants);
 			//info.AddValue("Messages", messages);
 
-			var type = (ChatType)info.GetValue( "SimpleChats", typeof(ChatType));
-			ID = (long)info.GetValue( "SimpleChats", typeof(long));
-			Name = (string)info.GetValue( "SimpleChats", typeof(string));
+			var type = (ChatType)info.GetValue( "ChatType", typeof(ChatType));
+			ID = (long)info.GetValue( "ChatID", typeof(long));
+			Name = (string)info.GetValue( "ChatName", typeof(string));
 			participants = (Username[])info.GetValue( "SimpleChats", typeof(Username[]));
-			messages = (List<Message>)info.GetValue( "SimpleChats", typeof(List<Message>));
+			messages = (List<Message>)info.GetValue( "GroupChats", typeof(List<Message>));
 		}
 
 		public List<Message> GetMessages() => messages;
