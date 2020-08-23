@@ -57,6 +57,21 @@ namespace ChatLib
 		{
 		}
 
+		public ChatInfo(SerializationInfo info, StreamingContext context)
+		{
+			//info.AddValue("ChatType", Type);
+			//info.AddValue("ChatID", ID);
+			//info.AddValue("ChatName", Name);
+			//info.AddValue("Participants", participants);
+			//info.AddValue("Messages", messages);
+
+			var type = (ChatType)info.GetValue( "SimpleChats", typeof(ChatType));
+			ID = (long)info.GetValue( "SimpleChats", typeof(long));
+			Name = (string)info.GetValue( "SimpleChats", typeof(string));
+			participants = (Username[])info.GetValue( "SimpleChats", typeof(Username[]));
+			messages = (List<Message>)info.GetValue( "SimpleChats", typeof(List<Message>));
+		}
+
 		public List<Message> GetMessages() => messages;
 
 		public void AddMessage(Message message) {
@@ -97,8 +112,9 @@ namespace ChatLib
 			info.AddValue("ChatType", Type);
 			info.AddValue("ChatID", ID);
 			info.AddValue("ChatName", Name);
-			info.AddValue("LastMessageDateTime", lastMessageTime);
+			//info.AddValue("LastMessageDateTime", lastMessageTime);
 			info.AddValue("Participants", participants);
+			info.AddValue("Messages", messages);
 		}
 
 		public int CompareTo(ChatInfo other)
@@ -128,10 +144,13 @@ namespace ChatLib
 		{
 			if (regex == null)
 			{
-				regex = new Regex("^([12][0-9]{3}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]))$");
+				// Regex for format YYYY-MM-DD without checking the amount of days in month
+				regex = new Regex("^([12][0-9]{3}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]))$", RegexOptions.Compiled);
 			}
+
 			var result = new List<Message>();
 			var files = new List<FileInfo>(directoryInfo.GetFiles());
+
 			// filter
 			for (int i = 0; i < files.Count; i++)
 			{
@@ -143,11 +162,16 @@ namespace ChatLib
 				}
 			}
 
+			BinaryFormatterReader bfr;
 			foreach (var file in files)
 			{
-				var bfr = new BinaryFormatterReader( new BinaryFormatter(), File.OpenRead(file.FullName) );
+				bfr = new BinaryFormatterReader( new BinaryFormatter(), file.Open(FileMode.Open, FileAccess.Read) );
 
-				/* READ MESSAGES FROM FILE HERE */
+				while ( !bfr.IsEmpty)
+				{
+					result.Add( (Message)bfr.Read() );
+				}
+				bfr.Close();
 			}
 
 			return result;
