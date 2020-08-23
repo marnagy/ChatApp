@@ -44,7 +44,7 @@ namespace ChatClient
 		private const string AccountCreateSuccessTitle = "New account has been created.";
 		private const string AccountCreateSuccessMessage = "You can now sign in.";
 
-		private const string AccountCreateFailTitle = "New account has been created.";
+		private const string AccountCreateFailTitle = "New account has NOT been created.";
 
 		private const string SignInFailTitle = "Failed to log in.";
 		//private const string AccountCreateFailMessage = "You can now sign in.";
@@ -109,7 +109,7 @@ namespace ChatClient
 						{
 						case ResponseType.AccountInfo:
 							AccountInfoResponse AIResp = (AccountInfoResponse)resp; //.Read(reader, sessionID);
-							app.MainPage = new HomePage(app, AIResp);
+							app.MainPage = new HomePage(app, username, AIResp, sessionID);
 							break;
 						case ResponseType.Fail:
 								FailResponse FResp = (FailResponse)resp; //.Read(reader, sessionID);
@@ -123,7 +123,6 @@ namespace ChatClient
 					{
 						Connection.Disconnect(ref client, ref reader, ref writer);
 					}
-					//app.MainPage = new HomePage(app);
 				}
 				catch(SocketException)
 				{
@@ -181,12 +180,13 @@ namespace ChatClient
 						switch (resp.Type)
 						{
 							case ResponseType.Success:
-								emailLabel.IsVisible = false;
-								emailEntry.Text = "";
-								emailEntry.IsVisible = false;
-								btnStack.IsVisible = false;
-								btnGrid.IsVisible = true;
 								loginBtn.IsVisible = true;
+								emailEntry.IsVisible = false;
+								emailLabel.IsVisible = false;
+								btnGrid.IsVisible = true;
+								btnStack.IsVisible = false;
+
+								emailEntry.Text = "";
 								usernameEntry.Text = "";
 								passwordEntry.Text = "";
 								DisplayAlert(AccountCreateSuccessTitle, AccountCreateSuccessMessage, DefaultCancel);
