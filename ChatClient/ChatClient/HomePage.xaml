@@ -2,24 +2,29 @@
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:d="http://xamarin.com/schemas/2014/forms/design"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:chatlib="clr-namespace:ChatLib;assembly=ChatLib"
+			 mc:Ignorable="d"
              x:Class="ChatClient.HomePage">
+	<ContentPage.BindingContext>
+		<chatlib:ChatType/>
+	</ContentPage.BindingContext>
 	<ContentPage.Content>
-		<StackLayout Orientation="Vertical">
+		<StackLayout Orientation="Vertical" BackgroundColor="Blue">
 			<StackLayout Orientation="Horizontal" BackgroundColor="Navy"
 						 HeightRequest="50" Margin="0, 0, 0, 10">
 			</StackLayout>
-			<ListView x:Name="listView" 
+			<ListView x:Name="listView" BackgroundColor="GhostWhite"
 					  ItemTapped="ListView_ItemTapped"
 					  HorizontalOptions="FillAndExpand" VerticalOptions="StartAndExpand">
 				<ListView.ItemTemplate>
 					<DataTemplate>
-						<TextCell Text="{Binding ID}" Detail="{Binding Name}"/>
+						<TextCell Text="{Binding Text}" Detail="{Binding Detail}"/>
+						<!--<TextCell BindingContext="ChatInfo"
+								  Text="Test Text" Detail="{Binding }"/>-->
 					</DataTemplate>
 				</ListView.ItemTemplate>
 			</ListView>
-			<Grid Visual="Material">
+			<Grid Visual="Material" BackgroundColor="GhostWhite">
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="*" />
 					<ColumnDefinition Width="*" />

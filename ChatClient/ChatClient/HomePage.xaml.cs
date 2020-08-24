@@ -22,7 +22,7 @@ namespace ChatClient
 
 		private readonly App app;
 
-		private readonly ObservableCollection<ChatInfo> chatViews = new ObservableCollection<ChatInfo>();
+		private readonly ObservableCollection<ChatInfoCell> chatViews = new ObservableCollection<ChatInfoCell>();
 		private readonly HashSet<Username> simpleChatUsernames = new HashSet<Username>();
 		private readonly long sessionID;
 		private readonly Username myUsername;
@@ -46,38 +46,45 @@ namespace ChatClient
 
 			// not practical, but using lambda ensures noone can use this "method"
 			// plus this has access to all variables without making them arguments
-			ReadingThread = new Thread(new ThreadStart(() =>
-				{
-					while (true)
-					{
-						Response resp = (Response)reader.Read();
-						switch ( resp.Type )
-						{
-							case ResponseType.ChatCreated:
-								ChatCreatedResponse CCResp = (ChatCreatedResponse)resp;
-								chatViews.Insert(0, CCResp.Info);
-								break;
+
+			//ReadingThread = new Thread(new ThreadStart(() =>
+			//	{
+			//		while (true)
+			//		{
+			//			Response resp = (Response)reader.Read();
+			//			switch ( resp.Type )
+			//			{
+			//				case ResponseType.ChatCreated:
+			//					ChatCreatedResponse CCResp = (ChatCreatedResponse)resp;
+			//					chatViews.Insert(0, CCResp.Info);
+			//					break;
 							
-							default:
-								break;
-						}
-					}
-				}));
-			ReadingThread.IsBackground = true;
-			ReadingThread.Start();
+			//				default:
+			//					break;
+			//			}
+			//		}
+			//	}));
+			//ReadingThread.IsBackground = true;
+			//ReadingThread.Start();
 		}
 
 		private void LoadChats(ChatInfo[] simpleChats, ChatInfo[] groupChats)
 		{
 			List<ChatInfo> chats = new List<ChatInfo>();
-			foreach (var chat in simpleChats)
+			if (simpleChats != null)
 			{
-				chats.Add(chat);
+				foreach (var chat in simpleChats)
+				{
+					chats.Add(chat);
+				}
 			}
 
-			foreach (var chat in groupChats)
+			if (groupChats != null)
 			{
-				chats.Add(chat);
+				foreach (var chat in groupChats)
+				{
+					chats.Add(chat);
+				}
 			}
 
 			chats.Sort((a,b) => DateTime.Compare(a.lastMessageTime, b.lastMessageTime));
@@ -85,13 +92,13 @@ namespace ChatClient
 			UpdateChatsView(chatViews, chats);
 		}
 
-		private void UpdateChatsView(ObservableCollection<ChatInfo> chatViews, List<ChatInfo> chats)
+		private void UpdateChatsView(ObservableCollection<ChatInfoCell> chatViews, List<ChatInfo> chats)
 		{
 			chatViews.Clear();
 
 			foreach (var item in chats)
 			{
-				chatViews.Add( item );
+				chatViews.Add( new ChatInfoCell(item) );
 				//chatViews.Add( new TextCell{ Text = item.Name, Detail = item.ID.ToString() } );
 			}
 		}
@@ -100,7 +107,7 @@ namespace ChatClient
 		{
 			lock (chatViews)
 			{
-				DisplayAlert("Cell tapped!", "Cell: " + chatViews[e.ItemIndex].ID, "Okay");
+				DisplayAlert("Cell tapped!", "Cell: " + chatViews[e.ItemIndex].Info.ID, "Okay");
 			}
 		}
 
