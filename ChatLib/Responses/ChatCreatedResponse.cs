@@ -14,6 +14,10 @@ namespace ChatLib.Responses
 		{
 			Info = info;
 		}
+		public ChatCreatedResponse(SerializationInfo info, StreamingContext context) : base(LoadParentAttributes(info, context))
+		{
+			Info = (ChatInfo)info.GetValue( ChatInfoSerializationName, typeof(ChatInfo));
+		}
 		public override void GetObjectData(SerializationInfo info, StreamingContext context)
 		{
 			info.AddValue( SessionIDSerializationName, SessionID);
