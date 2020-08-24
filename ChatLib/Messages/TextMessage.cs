@@ -15,16 +15,20 @@ namespace ChatLib.Messages
 		
 		public readonly string Text;
 
-		public TextMessage(Username sender, ChatID id, string text) : base(type, id, sender)
+		public TextMessage(Username sender, long id, string text) : base(type, id, sender)
 		{
 			this.Text = text;
+		}
+		public TextMessage(SerializationInfo info, StreamingContext context) : base(LoadParentAttributes(info, context))
+		{
+			Text = (string)info.GetValue( "Text", typeof(string));
 		}
 
 		public override void GetObjectData(SerializationInfo info, StreamingContext context)
 		{
 			info.AddValue("Type", Type);
+			info.AddValue("chatID", ChatID);
 			info.AddValue("senderUserName", SenderUsername);
-			info.AddValue("chatID", ID);
 			info.AddValue("Text", Text);
 		}
 	}
