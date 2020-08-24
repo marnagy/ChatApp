@@ -20,6 +20,8 @@ namespace ChatLib
 		public readonly ChatType Type;
 		public readonly long ID;
 		public readonly string Name;
+		public readonly Username[] participants;
+		private List<Message> messages;
 		public DateTime lastMessageTime { get {
 				lock (messages)
 				{
@@ -33,8 +35,6 @@ namespace ChatLib
 					}
 				}
 			}}
-		public readonly Username[] participants;
-		private List<Message> messages;
 		//public Message lastMessage { get
 		//	{
 
@@ -44,7 +44,7 @@ namespace ChatLib
 		{
 			if ( chatID == null || name == null || participants == null || messages == null )
 				throw new ArgumentNullException();
-			var now = DateTime.UtcNow;
+			//var now = DateTime.UtcNow;
 			//if ( now < lastMessageTime )
 			//	throw new ArgumentException("Invalid DateTime of last message.");
 			this.Type = type;
@@ -59,17 +59,11 @@ namespace ChatLib
 
 		public ChatInfo(SerializationInfo info, StreamingContext context)
 		{
-			//info.AddValue("ChatType", Type);
-			//info.AddValue("ChatID", ID);
-			//info.AddValue("ChatName", Name);
-			//info.AddValue("Participants", participants);
-			//info.AddValue("Messages", messages);
-
 			var type = (ChatType)info.GetValue( "ChatType", typeof(ChatType));
 			ID = (long)info.GetValue( "ChatID", typeof(long));
 			Name = (string)info.GetValue( "ChatName", typeof(string));
-			participants = (Username[])info.GetValue( "SimpleChats", typeof(Username[]));
-			messages = (List<Message>)info.GetValue( "GroupChats", typeof(List<Message>));
+			participants = (Username[])info.GetValue( "Participants", typeof(Username[]));
+			messages = (List<Message>)info.GetValue( "Messages", typeof(List<Message>));
 		}
 
 		public List<Message> GetMessages() => messages;
@@ -112,7 +106,6 @@ namespace ChatLib
 			info.AddValue("ChatType", Type);
 			info.AddValue("ChatID", ID);
 			info.AddValue("ChatName", Name);
-			//info.AddValue("LastMessageDateTime", lastMessageTime);
 			info.AddValue("Participants", participants);
 			info.AddValue("Messages", messages);
 		}
