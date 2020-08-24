@@ -1,12 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace ChatServer
 {
 	class Program
 	{
-		static void Main(string[] args)
+		public static void Main(string[] args)
 		{
-			Console.WriteLine("Hello World!");
+			var server = ChatServer.GetInstance(FileSystemDatabase.Initialize());
+			server.Run();
 		}
 	}
 }

@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:chatlib="clr-namespace:ChatLib;assembly=ChatLib"
+			 mc:Ignorable="d"
+             x:Class="ChatClient.HomePage">
+	<ContentPage.BindingContext>
+		<chatlib:ChatType/>
+	</ContentPage.BindingContext>
+	<ContentPage.Content>
+		<StackLayout Orientation="Vertical" BackgroundColor="Blue">
+			<StackLayout Orientation="Horizontal" BackgroundColor="Navy"
+						 HeightRequest="50" Margin="0, 0, 0, 10">
+			</StackLayout>
+			<ListView x:Name="listView" BackgroundColor="GhostWhite"
+					  ItemTapped="ListView_ItemTapped"
+					  HorizontalOptions="FillAndExpand" VerticalOptions="StartAndExpand">
+				<ListView.ItemTemplate>
+					<DataTemplate>
+						<TextCell Text="{Binding Text}" Detail="{Binding Detail}"/>
+						<!--<TextCell BindingContext="ChatInfo"
+								  Text="Test Text" Detail="{Binding }"/>-->
+					</DataTemplate>
+				</ListView.ItemTemplate>
+			</ListView>
+			<Grid Visual="Material" BackgroundColor="GhostWhite">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto"/>
+				</Grid.RowDefinitions>
+				<Button x:Name="newChatBtn" Text="Start New Chat"
+						Clicked="newChat_Click" Grid.Column="0"
+						Visual="Material"/>
+				<Button x:Name="newGroupChatBtn" Text="Start New Group Chat"
+						Clicked="newGroupChat_Click" Grid.Column="1"
+						Visual="Material"/>
+			</Grid>
+		</StackLayout>
+	</ContentPage.Content>
+</ContentPage>
