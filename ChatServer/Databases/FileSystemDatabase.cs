@@ -379,12 +379,12 @@ namespace ChatServer
 
 		private void CreateGroupChatList(DirectoryInfo userDir)
 		{
-			File.CreateText(Path.Combine(userDir.FullName, groupChatInfoFileName));
+			File.CreateText(Path.Combine(userDir.FullName, groupChatInfoFileName)).Close();
 		}
 
 		private void CreateChatList(DirectoryInfo userDir)
 		{
-			File.CreateText(Path.Combine(userDir.FullName, simpleChatInfoFileName));
+			File.CreateText(Path.Combine(userDir.FullName, simpleChatInfoFileName)).Close();
 		}
 
 		private void CreateUserInfo(DirectoryInfo userDir, Email email, Password password)
@@ -505,19 +505,7 @@ namespace ChatServer
 						throw new ArgumentException();
 				}
 
-				// this is ugly, but due to unknown race condition it is (at least for now) needed
-				string[] chatIDs = null;
-				while (chatIDs == null)
-				{
-					try
-					{
-						chatIDs = File.ReadAllLines(Path.Combine(usersDir.FullName, username.ToString(), fileName));
-					}
-					catch (IOException)
-					{
-
-					}
-				}
+				var chatIDs = File.ReadAllLines(Path.Combine(usersDir.FullName, username.ToString(), fileName));
 
 				foreach (var ID in chatIDs)
 				{
