@@ -109,7 +109,7 @@ namespace ChatClient
 						{
 						case ResponseType.AccountInfo:
 							AccountInfoResponse AIResp = (AccountInfoResponse)resp; //.Read(reader, sessionID);
-							app.MainPage = new HomePage(app, username, AIResp, sessionID);
+							app.MainPage = new HomePage(app, username, writer, reader, AIResp, sessionID);
 							break;
 						case ResponseType.Fail:
 								FailResponse FResp = (FailResponse)resp; //.Read(reader, sessionID);
