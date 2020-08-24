@@ -23,11 +23,8 @@ namespace ChatLib.Requests
 		}
 		public SignInRequest(SerializationInfo info, StreamingContext context) : base(LoadParentAttributes(info, context))
 		{
-			Username username = (Username)info.GetValue( UsernameSerializationName, typeof(Username));
-			Password password = (Password)info.GetValue( PasswordSerializationName, typeof(Password));
-
-			this.username = username;
-			this.password = password;
+			username = (Username)info.GetValue( UsernameSerializationName, typeof(Username));
+			password = (Password)info.GetValue( PasswordSerializationName, typeof(Password));
 		}
 		public static SignInRequest Read(BinaryFormatterReader reader, long sessionID)
 		{

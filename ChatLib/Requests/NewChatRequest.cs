@@ -29,6 +29,11 @@ namespace ChatLib.Requests
 			}
 		}
 
+		public NewChatRequest(SerializationInfo info, StreamingContext context) : base(LoadParentAttributes(info, context))
+		{
+			participants = (Username[])info.GetValue( ParticipantsSerializationName, typeof(Username[]));
+		}
+
 		public override void GetObjectData(SerializationInfo info, StreamingContext context)
 		{
 			info.AddValue( SessionIDSerializationName, SessionID);
