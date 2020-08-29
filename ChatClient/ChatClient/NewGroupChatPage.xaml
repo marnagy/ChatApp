@@ -16,16 +16,20 @@
 					</DataTemplate>
 				</ListView.ItemTemplate>
 			</ListView>
-			<Grid>
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="*"/>
-					<ColumnDefinition Width="*"/>
-				</Grid.ColumnDefinitions>
+			<StackLayout Orientation="Vertical" VerticalOptions="End">
 				<Button Text="Create Chat" Clicked="CreateGroupChat"
+						HorizontalOptions="FillAndExpand"/>
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="*"/>
+						<ColumnDefinition Width="*"/>
+					</Grid.ColumnDefinitions>
+					<Button Text="Add User" Clicked="AddEntry"
 						HorizontalOptions="FillAndExpand" Grid.Column="0"/>
-				<Button Text="Add User" Clicked="AddEntry"
+					<Button Text="Remove Last User" Clicked="RemoveEntry"
 						HorizontalOptions="FillAndExpand" Grid.Column="1"/>
-			</Grid>
+				</Grid>
+			</StackLayout>
 		</StackLayout>
 	</ContentPage.Content>
 </ContentPage>
