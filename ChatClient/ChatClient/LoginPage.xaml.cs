@@ -109,7 +109,12 @@ namespace ChatClient
 						{
 						case ResponseType.AccountInfo:
 							AccountInfoResponse AIResp = (AccountInfoResponse)resp; //.Read(reader, sessionID);
-							app.MainPage = new HomePage(app, username, writer, reader, AIResp, sessionID);
+							var homePage = new NavigationPage(new HomePage(app, username, writer, reader, AIResp, sessionID) );
+							//Device.BeginInvokeOnMainThread(() => {
+								//indicator.IsVisible = false;
+								//indicator.IsRunning = false;
+								app.MainPage = homePage;
+							//});
 							break;
 						case ResponseType.Fail:
 								FailResponse FResp = (FailResponse)resp; //.Read(reader, sessionID);
@@ -216,8 +221,7 @@ namespace ChatClient
 				//}
 				finally
 				{
-					indicator.IsVisible = false;
-					indicator.IsRunning = false;
+					
 				}
 			//});
 		}
