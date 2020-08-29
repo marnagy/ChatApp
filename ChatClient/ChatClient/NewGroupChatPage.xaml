@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ChatClient.NewGroupChatPage">
+	<ContentPage.Content>
+		<StackLayout Orientation="Vertical" VerticalOptions="Center">
+			<ListView x:Name="list" VerticalOptions="Center">
+				<ListView.ItemTemplate>
+					<DataTemplate>
+						<ViewCell>
+							<StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
+								<Entry x:Name="usernameEntry" Text="{Binding value}" HorizontalOptions="FillAndExpand" VerticalOptions="Center"
+									   Placeholder="Enter username here" HorizontalTextAlignment="Center"/>
+							</StackLayout>
+						</ViewCell>
+					</DataTemplate>
+				</ListView.ItemTemplate>
+			</ListView>
+			<StackLayout Orientation="Vertical" VerticalOptions="End">
+				<Button Text="Create Chat" Clicked="CreateGroupChat"
+						HorizontalOptions="FillAndExpand"/>
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="*"/>
+						<ColumnDefinition Width="*"/>
+					</Grid.ColumnDefinitions>
+					<Button Text="Add User" Clicked="AddEntry"
+						HorizontalOptions="FillAndExpand" Grid.Column="0"/>
+					<Button Text="Remove Last User" Clicked="RemoveEntry"
+						HorizontalOptions="FillAndExpand" Grid.Column="1"/>
+				</Grid>
+			</StackLayout>
+		</StackLayout>
+	</ContentPage.Content>
+</ContentPage>

@@ -17,6 +17,9 @@ namespace ChatLib.Responses
 		protected const string PasswordSerializationName = "Password";
 		protected const string ReasonSerializationName = "Reason";
 		protected const string ChatInfoSerializationName = "ChatInfo";
+		protected const string ChatTypeSerializationName = "ChatType";
+		protected const string ChatIDSerializationName = "ChatID";
+		protected const string MessageSerializationName = "Message";
 
 		public readonly ResponseType Type;
 		public readonly long SessionID;

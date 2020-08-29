@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using ChatLib.BinaryFormatters;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Collections.ObjectModel;
 
 namespace ChatLib
 {
@@ -21,7 +22,7 @@ namespace ChatLib
 		public readonly long ID;
 		public readonly string Name;
 		public readonly Username[] participants;
-		private List<Message> messages;
+		private ObservableCollection<Message> messages;
 		public DateTime lastMessageTime { get {
 				lock (messages)
 				{
@@ -35,14 +36,10 @@ namespace ChatLib
 					}
 				}
 			}}
-		//public Message lastMessage { get
-		//	{
-
-		//	}
-		//}
+		public Message lastMessage { get => messages[messages.Count - 1]; }
 		public ChatInfo(ChatType type, long chatID, string name, Username[] participants, List<Message> messages)
 		{
-			if ( chatID == null || name == null || participants == null || messages == null )
+			if ( name == null || participants == null || messages == null )
 				throw new ArgumentNullException();
 			//var now = DateTime.UtcNow;
 			//if ( now < lastMessageTime )
@@ -51,7 +48,7 @@ namespace ChatLib
 			this.ID = chatID;
 			this.Name = name;
 			this.participants = participants;
-			this.messages = messages;
+			this.messages = new ObservableCollection<Message>(messages);
 		}
 		public ChatInfo(ChatType type, long chatID, string name, Username[] participants) : this(type, chatID, name, participants, new List<Message>())
 		{
@@ -59,14 +56,22 @@ namespace ChatLib
 
 		public ChatInfo(SerializationInfo info, StreamingContext context)
 		{
-			var type = (ChatType)info.GetValue( "ChatType", typeof(ChatType));
+			Type = (ChatType)info.GetValue( "ChatType", typeof(ChatType));
 			ID = (long)info.GetValue( "ChatID", typeof(long));
 			Name = (string)info.GetValue( "ChatName", typeof(string));
 			participants = (Username[])info.GetValue( "Participants", typeof(Username[]));
-			messages = (List<Message>)info.GetValue( "Messages", typeof(List<Message>));
+			var messagesAmount = (int)info.GetValue( "MessagesAmount", typeof(int));
+			var arr = new Message[messagesAmount];
+			for (int i = 0; i < messagesAmount; i++)
+			{
+				arr[i] = (Message)info.GetValue( $"Message_{i}", typeof(Message));
+			}
+			messages = new ObservableCollection<Message>(arr);
+			//var arr = (Message[])info.GetValue( "Messages", typeof(Message[]) );
+			//messages = new ObservableCollection<Message>( arr );
 		}
 
-		public List<Message> GetMessages() => messages;
+		public ObservableCollection<Message> GetMessages() => messages;
 
 		public void AddMessage(Message message) {
 			if ( messages.Count == 0 )
@@ -107,7 +112,12 @@ namespace ChatLib
 			info.AddValue("ChatID", ID);
 			info.AddValue("ChatName", Name);
 			info.AddValue("Participants", participants);
-			info.AddValue("Messages", messages);
+			info.AddValue("MessagesAmount", messages.Count );
+			for (int i = 0; i < messages.Count; i++)
+			{
+				info.AddValue($"Message_{i}", messages[i] );
+			}
+			//info.AddValue("Messages", messages.ToArray() );
 		}
 
 		public int CompareTo(ChatInfo other)
@@ -115,22 +125,22 @@ namespace ChatLib
 			return DateTime.Compare(this.lastMessageTime, other.lastMessageTime);
 		}
 
-		public static ChatInfo FromDictionary(ChatType type, DirectoryInfo directoryInfo, string infoFileName)
+		public static ChatInfo FromDictionary(ChatType type, DirectoryInfo directoryInfo, string infoFileName, string chatNameFileName)
 		{
 			List<Username> participants = new List<Username>();
 			
 			var usernames = File.ReadAllLines(Path.Combine(directoryInfo.FullName, infoFileName));
 
-			var name = usernames[0];
-			for (int i = 1; i < usernames.Length; i++)
-			//foreach (var username in usernames)
+			var name = File.ReadAllText(Path.Combine(directoryInfo.FullName, chatNameFileName)).Trim();
+			//for (int i = 0; i < usernames.Length; i++)
+			foreach (var username in usernames)
 			{
-				participants.Add(usernames[i].ToUsername());
+				participants.Add(username.ToUsername());
 			}
 
-			LoadMessages(directoryInfo);
+			var messages = LoadMessages(directoryInfo);
 
-			return new ChatInfo(type, long.Parse(directoryInfo.Name), name, participants.ToArray() );
+			return new ChatInfo(type, long.Parse(directoryInfo.Name), name, participants.ToArray(), messages );
 		}
 
 		private static List<Message> LoadMessages(DirectoryInfo directoryInfo)
@@ -160,9 +170,9 @@ namespace ChatLib
 			{
 				bfr = new BinaryFormatterReader( new BinaryFormatter(), file.Open(FileMode.Open, FileAccess.Read) );
 
-				while ( !bfr.IsEmpty)
-				{
-					result.Add( (Message)bfr.Read() );
+				while(bfr.stream.Position < bfr.stream.Length)
+{
+					 result.Add( (TextMessage)bfr.Read() );
 				}
 				bfr.Close();
 			}

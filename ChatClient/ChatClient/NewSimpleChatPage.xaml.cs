@@ -15,13 +15,13 @@ namespace ChatClient
 	[XamlCompilation(XamlCompilationOptions.Compile)]
 	public partial class NewSimpleChatPage : ContentPage
 	{
-		List<Username> list;
+		Username myUsername;
 		BinaryFormatterWriter writer;
 		long sessionID;
 		
-		public NewSimpleChatPage(List<Username> list, BinaryFormatterWriter writer, long sessionID)
+		public NewSimpleChatPage( Username myUsername, BinaryFormatterWriter writer, long sessionID)
 		{
-			this.list = list;
+			this.myUsername = myUsername;
 			this.writer = writer;
 			this.sessionID = sessionID;
 
@@ -30,11 +30,15 @@ namespace ChatClient
 
 		private void Button_Clicked(object sender, EventArgs e)
 		{
-			list.Add( usernameEntry.Text.ToUsername() );
-			Navigation.PopModalAsync(animated: true);
-
-			var req = new NewChatRequest(list[0], list[1], sessionID);
-			writer.Write(req);
+			if (usernameEntry.Text.Trim().Length > 0)
+			{
+				var usr = usernameEntry.Text.Trim();
+				Navigation.PopModalAsync(animated: true);
+				Task.Run( () => {
+					var req = new NewChatRequest(myUsername, usr.ToUsername(), sessionID);
+					writer.Write(req);
+				});
+			}
 		}
 	}
 }

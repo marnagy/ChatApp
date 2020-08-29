@@ -6,7 +6,7 @@ using System.Runtime.Serialization;
 namespace ChatLib
 {
 	[Serializable]
-	public struct Username : IComparable<Username>, ISerializable
+	public struct Username : IComparable<Username>, ISerializable, IEquatable<Username>
 	{
 		const string ValueSerializationName = "Username";
 		private readonly string Value;
@@ -22,6 +22,11 @@ namespace ChatLib
 		public int CompareTo(Username other)
 		{
 			return string.Compare(Value, other.Value);
+		}
+
+		public bool Equals(Username other)
+		{
+			return this.Value == other.Value;
 		}
 
 		public void GetObjectData(SerializationInfo info, StreamingContext context)

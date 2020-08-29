@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatClient.Android", "ChatC
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatClient.iOS", "ChatClient\ChatClient.iOS\ChatClient.iOS.csproj", "{DE441AC9-E78D-4D7A-AB95-BEF17E1AFC2E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatClient", "ChatClient\ChatClient\ChatClient.csproj", "{5A8C7595-15FC-431E-A53C-8201D7A1153E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChatClient", "ChatClient\ChatClient\ChatClient.csproj", "{5A8C7595-15FC-431E-A53C-8201D7A1153E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

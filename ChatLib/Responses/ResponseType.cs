@@ -8,7 +8,7 @@ namespace ChatLib.Responses
 	{
 		AccountInfo,
 		ChatCreated,
-
+		AddMessage,
 		Success,
 		Fail
 	}
