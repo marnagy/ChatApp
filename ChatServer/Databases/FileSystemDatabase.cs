@@ -256,8 +256,7 @@ namespace ChatServer
 
 			lock (this)
 			{
-				var set = users.ToHashSet();
-				if ( set.Count == 2)
+				if (users.Length == 2)
 				{
 					// simple chat
 					var chatID = GetChatID(users[0], users[1]);
@@ -285,10 +284,10 @@ namespace ChatServer
 
 					return (true, info, string.Empty);
 				}
-				else if ( set.Count > 2 )
+				else if ( users.Length > 2)
 				{
 					// group chat
-					var chatID = GetChatID( users );
+					var chatID = GetChatID(users);
 					var chatDir = groupChatsDir.CreateSubdirectory(chatID.ToString());
 
 					var info = new ChatInfo(ChatType.Group, chatID, GroupChatDefaultFileName(users), users);
