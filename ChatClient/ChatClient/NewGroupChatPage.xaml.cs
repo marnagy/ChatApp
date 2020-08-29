@@ -38,7 +38,10 @@ namespace ChatClient
 		}
 		private void RemoveEntry(object sender, EventArgs e)
 		{
-			collection.RemoveAt(collection.Count - 1);
+			if (collection.Count > 2)
+			{
+				collection.RemoveAt(collection.Count - 1);
+			}
 		}
 		private void CreateGroupChat(object sender, EventArgs e)
 		{
