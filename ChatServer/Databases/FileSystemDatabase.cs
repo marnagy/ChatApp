@@ -193,19 +193,19 @@ namespace ChatServer
 		//	}
 		//	}
 
-		private (string name, long messageID) GetSimpleChatInfo(string line)
-		{
-			if (line == null) throw new ArgumentNullException();
-			string[] lineParts = line.Split(simpleChatSeparator);
-			if (long.TryParse(lineParts[2], out long lastMsgID))
-			{
-				return (lineParts[0] + simpleChatSeparator.ToString() + lineParts[1], lastMsgID);
-			}
-			else
-			{
-				throw new FormatException("Wrong format of stored info about chat.");
-			}
-		}
+		//private (string name, long messageID) GetSimpleChatInfo(string line)
+		//{
+		//	if (line == null) throw new ArgumentNullException();
+		//	string[] lineParts = line.Split(simpleChatSeparator);
+		//	if (long.TryParse(lineParts[2], out long lastMsgID))
+		//	{
+		//		return (lineParts[0] + simpleChatSeparator.ToString() + lineParts[1], lastMsgID);
+		//	}
+		//	else
+		//	{
+		//		throw new FormatException("Wrong format of stored info about chat.");
+		//	}
+		//}
 		private long GetChatID(Username user1, Username user2)
 		{
 			lock (simpleChatIDs)
@@ -287,21 +287,31 @@ namespace ChatServer
 				else if ( users.Length > 2)
 				{
 					// group chat
-					//var chatID = GetChatID(users);
-					//var chatDir = simpleChatsDir.CreateSubdirectory(chatID.ToString());
+					var chatID = GetChatID(users);
+					var chatDir = groupChatsDir.CreateSubdirectory(chatID.ToString());
 
-					//var info = new ChatInfo(ChatType.Group, chatID, GroupChatDefaultFileName(users), users);
+					var info = new ChatInfo(ChatType.Group, chatID, GroupChatDefaultFileName(users), users);
 
-					//using ( var infoFile = new StreamWriter( File.Create( Path.Combine(chatDir.FullName, infoFileName) ) ) )
-					//{
-					//	infoFile.WriteLine( info.ID.ToString() );
-					//	foreach (var username in info.participants)
-					//	{
-					//		infoFile.WriteLine( username.ToString() );
-					//	}
-					//}
-					//return (true, info, string.Empty);
-					return (false, null, "Not yet implemented");
+					using ( var infoFile = new StreamWriter( File.Create( Path.Combine(chatDir.FullName, infoFileName) ) ) )
+					{
+						foreach (var username in info.participants)
+						{
+							infoFile.WriteLine( username.ToString() );
+						}
+					}
+
+					using ( var infoFile = new StreamWriter( File.Create( Path.Combine(chatDir.FullName, chatNameFileName) ) ) )
+					{
+						infoFile.WriteLine(info.Name);
+					}
+
+					foreach (var username in users)
+					{
+						AddChat(info.Type, chatID, username);
+					}
+
+					return (true, info, string.Empty);
+					//return (false, null, "Not yet implemented");
 				}
 				else
 				{
