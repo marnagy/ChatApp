@@ -17,7 +17,7 @@ namespace ChatClient
 	public partial class LoginPage : ContentPage
 	{
 		private const int defaultPort = 5318;
-		private const string hostname = "10.0.2.2";
+		private const string hostname = "192.168.2.12";
 
 		private const string ConnectionErrorTitle = "Server was not reached.";
 		private const string ConnectionErrorMessage = "Server appears to be unavailable.\nPlease, try again later.";
@@ -221,7 +221,8 @@ namespace ChatClient
 				//}
 				finally
 				{
-					
+					indicator.IsVisible = false;
+					indicator.IsRunning = false;
 				}
 			//});
 		}
