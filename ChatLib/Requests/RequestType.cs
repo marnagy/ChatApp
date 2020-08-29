@@ -8,6 +8,7 @@ namespace ChatLib.Requests
 	{
 		NewAccount,
 		SignIn,
-		NewChat
+		NewChat,
+		NewMessage
 	}
 }
