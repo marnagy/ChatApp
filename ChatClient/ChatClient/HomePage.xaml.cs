@@ -151,16 +151,17 @@ namespace ChatClient
 
 		private void newChat_Click(object sender, EventArgs e)
 		{
-			NCUsernames = new List<Username>(2);
-			NCUsernames.Add(myUsername);
-			var page = new NewSimpleChatPage(NCUsernames, writer, sessionID);
+			var page = new NewSimpleChatPage(myUsername, writer, sessionID);
 
 			Navigation.PushModalAsync( page, animated: true);
 		}
 
 		private void newGroupChat_Click(object sender, EventArgs e)
 		{
-			DisplayAlert("Error", "This feature is not yet implemented.", "OK");
+			var page = new NewGroupChatPage(myUsername, writer, sessionID);
+
+			Navigation.PushModalAsync( page, animated: true);
+			//DisplayAlert("Error", "This feature is not yet implemented.", "OK");
 		}
 	}
 }
