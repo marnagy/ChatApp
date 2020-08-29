@@ -3,10 +3,42 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="ChatClient.ChatPage">
     <ContentPage.Content>
-        <StackLayout>
-            <Label Text="Welcome to Xamarin.Forms!"
-                VerticalOptions="CenterAndExpand" 
-                HorizontalOptions="CenterAndExpand" />
-        </StackLayout>
+		<StackLayout Orientation="Vertical">
+			<ListView x:Name="list" VerticalOptions="FillAndExpand"
+					  SeparatorVisibility="None" HasUnevenRows="True"
+					  ItemTapped="list_ItemTapped" SelectionMode="None">
+				<ListView.ItemTemplate>
+					<DataTemplate>
+						<ViewCell>
+							<Grid VerticalOptions="StartAndExpand">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="*"/>
+									<ColumnDefinition Width="*"/>
+									<ColumnDefinition Width="*"/>
+								</Grid.ColumnDefinitions>
+								<Frame BackgroundColor="{Binding bcgColor}" CornerRadius="10"
+										Padding="5" Margin="10" HasShadow="True"
+										Grid.Column="{Binding column}" Grid.ColumnSpan="3"
+									   HorizontalOptions="{Binding horizontalOpt}">
+									<StackLayout Orientation="Vertical" x:Name="internalStack"
+												 HorizontalOptions="{Binding horizontalOpt}">
+										<Label Text="{Binding sender}" HorizontalOptions="{Binding horizontalOpt}"
+											   FontAttributes="Bold" FontSize="Medium" TextColor="Black"/>
+										<Label Text="{Binding text}" IsVisible="{Binding hasText}"
+											   FontSize="Medium" TextColor="Black" HorizontalTextAlignment="{Binding textAlignment}"/>
+									</StackLayout>
+								</Frame>
+							</Grid>
+						</ViewCell>
+					</DataTemplate>
+				</ListView.ItemTemplate>
+			</ListView>
+			<StackLayout Orientation="Horizontal">
+				<Editor x:Name="editor" HorizontalOptions="FillAndExpand"
+						Placeholder="Enter a message here"/>
+				<Button x:Name="button" HorizontalOptions="End"
+						Text="Send" Clicked="button_Clicked" CornerRadius="3" />
+			</StackLayout>
+		</StackLayout>
     </ContentPage.Content>
 </ContentPage>
