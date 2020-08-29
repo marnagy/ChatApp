@@ -9,7 +9,7 @@ namespace ChatLib.BinaryFormatters
 	public class BinaryFormatterReader
 	{
 		private readonly BinaryFormatter deformatter;
-		private readonly Stream stream;
+		public readonly Stream stream;
 		public bool IsClosed { get; private set;} = false;
 		public bool IsEmpty => stream.Length == 0;
 		public BinaryFormatterReader(BinaryFormatter bf, Stream stream)
@@ -31,13 +31,9 @@ namespace ChatLib.BinaryFormatters
 			{
 				if (!IsClosed)
 				{
-					if (stream.Length == 0) {
-						stream.Close();
-						IsClosed = true;
-						return true;
-					}
-					else
-						return false;
+					stream.Close();
+					IsClosed = true;
+					return true;
 				}
 				else
 					return true;

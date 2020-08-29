@@ -2,6 +2,7 @@
 using ChatLib.BinaryFormatters;
 using ChatLib.Responses;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -23,6 +24,7 @@ namespace ChatClient
 		private readonly App app;
 
 		private readonly ObservableCollection<ChatInfoCell> chatViews = new ObservableCollection<ChatInfoCell>();
+		private readonly Dictionary<(ChatType, long), ChatInfo> chats = new Dictionary<(ChatType, long), ChatInfo>();
 		private readonly HashSet<Username> simpleChatUsernames = new HashSet<Username>();
 		private readonly long sessionID;
 		private readonly Username myUsername;
@@ -47,34 +49,59 @@ namespace ChatClient
 			// not practical, but using lambda ensures noone can use this "method"
 			// plus this has access to all variables without making them arguments
 
-			//ReadingThread = new Thread(new ThreadStart(() =>
-			//	{
-			//		while (true)
-			//		{
-			//			Response resp = (Response)reader.Read();
-			//			switch ( resp.Type )
-			//			{
-			//				case ResponseType.ChatCreated:
-			//					ChatCreatedResponse CCResp = (ChatCreatedResponse)resp;
-			//					chatViews.Insert(0, CCResp.Info);
-			//					break;
-							
-			//				default:
-			//					break;
-			//			}
-			//		}
-			//	}));
-			//ReadingThread.IsBackground = true;
-			//ReadingThread.Start();
+			ReadingThread = new Thread(new ThreadStart(() =>
+				{
+					while (true)
+					{
+						Response resp = (Response)reader.Read();
+						switch (resp.Type)
+						{
+							case ResponseType.ChatCreated:
+								ChatCreatedResponse CCResp = (ChatCreatedResponse)resp;
+								var info = CCResp.Info;
+								chatViews.Insert(0, new ChatInfoCell(info) );
+								chats.Add((info.Type, info.ID), info);
+								break;
+							case ResponseType.AddMessage:
+								AddMessageResponse AMResp = (AddMessageResponse)resp;
+								chats.TryGetValue((AMResp.chatType, AMResp.chatID), out var chat);
+								var msg = AMResp.message;
+								if ( msg.SenderUsername.Equals(myUsername))
+								{
+									msg.column = 2;
+									msg.bcgColor = Color.LightBlue;
+									msg.horizontalOpt = LayoutOptions.End;
+									msg.textAlignment = TextAlignment.End;
+								}
+								chat.AddMessage(msg);
+								break;
+							default:
+								break;
+						}
+					}
+				}));
+			ReadingThread.IsBackground = true;
+			ReadingThread.Start();
 		}
 
-		private void LoadChats(ChatInfo[] simpleChats, ChatInfo[] groupChats)
+		private void LoadChats(IReadOnlyList<ChatInfo> simpleChats, IReadOnlyList<ChatInfo> groupChats)
 		{
 			List<ChatInfo> chats = new List<ChatInfo>();
 			if (simpleChats != null)
 			{
 				foreach (var chat in simpleChats)
 				{
+					foreach (var msg in chat.GetMessages())
+					{
+						if ( msg.SenderUsername.Equals( myUsername ) )
+						{
+							msg.column = 2;
+							msg.bcgColor = Color.LightBlue;
+							msg.horizontalOpt = LayoutOptions.End;
+							msg.textAlignment = TextAlignment.End;
+						}
+					}
+					while (! this.chats.TryAdd((chat.Type, chat.ID), chat) );
 					chats.Add(chat);
 				}
 			}
@@ -83,9 +110,22 @@ namespace ChatClient
 			{
 				foreach (var chat in groupChats)
 				{
+					foreach (var msg in chat.GetMessages())
+					{
+						if ( msg.SenderUsername.Equals( myUsername ) )
+						{
+							msg.column = 2;
+							msg.bcgColor = Color.LightBlue;
+							msg.horizontalOpt = LayoutOptions.End;
+							msg.textAlignment = TextAlignment.End;
+						}
+					}
+					while (! this.chats.TryAdd((chat.Type, chat.ID), chat) );
 					chats.Add(chat);
 				}
 			}
+
+			//List<ChatInfo> chatsList = new List<ChatInfo>(this.chats.Values);
 
 			chats.Sort((a,b) => DateTime.Compare(a.lastMessageTime, b.lastMessageTime));
 
@@ -99,23 +139,18 @@ namespace ChatClient
 			foreach (var item in chats)
 			{
 				chatViews.Add( new ChatInfoCell(item) );
-				//chatViews.Add( new TextCell{ Text = item.Name, Detail = item.ID.ToString() } );
 			}
 		}
 
 		private void ListView_ItemTapped(object sender, ItemTappedEventArgs e)
 		{
-			lock (chatViews)
-			{
-				DisplayAlert("Cell tapped!", "Cell: " + chatViews[e.ItemIndex].Info.ID, "Okay");
-			}
+			var item = e.Item as ChatInfoCell;
+			(sender as ListView).SelectedItem = null;
+			Navigation.PushAsync( new ChatPage(this.app, this.myUsername, item.Info, this.writer, sessionID) );
 		}
 
 		private void newChat_Click(object sender, EventArgs e)
 		{
-			/* CONTINUE DEVELOPMENT HERE */
-			//await Navigation.PushAsync( new NewSimpleChatPage() );
-
 			NCUsernames = new List<Username>(2);
 			NCUsernames.Add(myUsername);
 			var page = new NewSimpleChatPage(NCUsernames, writer, sessionID);
@@ -125,7 +160,7 @@ namespace ChatClient
 
 		private void newGroupChat_Click(object sender, EventArgs e)
 		{
-			
+			DisplayAlert("Error", "This feature is not yet implemented.", "OK");
 		}
 	}
 }

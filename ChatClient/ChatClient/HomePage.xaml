@@ -9,18 +9,13 @@
 		<chatlib:ChatType/>
 	</ContentPage.BindingContext>
 	<ContentPage.Content>
-		<StackLayout Orientation="Vertical" BackgroundColor="Blue">
-			<StackLayout Orientation="Horizontal" BackgroundColor="Navy"
-						 HeightRequest="50" Margin="0, 0, 0, 10">
-			</StackLayout>
+		<StackLayout Orientation="Vertical">
 			<ListView x:Name="listView" BackgroundColor="GhostWhite"
 					  ItemTapped="ListView_ItemTapped"
 					  HorizontalOptions="FillAndExpand" VerticalOptions="StartAndExpand">
 				<ListView.ItemTemplate>
 					<DataTemplate>
 						<TextCell Text="{Binding Text}" Detail="{Binding Detail}"/>
-						<!--<TextCell BindingContext="ChatInfo"
-								  Text="Test Text" Detail="{Binding }"/>-->
 					</DataTemplate>
 				</ListView.ItemTemplate>
 			</ListView>

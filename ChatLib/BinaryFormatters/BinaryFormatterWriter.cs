@@ -22,7 +22,10 @@ namespace ChatLib.BinaryFormatters
 		public void Write(object obj)
 		{
 			if (obj == null) throw new ArgumentNullException();
-			formatter.Serialize(stream, obj);
+			lock (this)
+			{
+				formatter.Serialize(stream, obj);
+			}
 		}
 
 		public bool Close()
@@ -31,13 +34,9 @@ namespace ChatLib.BinaryFormatters
 			{
 				if (!IsClosed)
 				{
-					if (stream.Length == 0) {
-						stream.Close();
-						IsClosed = true;
-						return true;
-					}
-					else
-						return false;
+					stream.Close();
+					IsClosed = true;
+					return true;
 				}
 				else
 					return true;

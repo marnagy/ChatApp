@@ -30,11 +30,15 @@ namespace ChatClient
 
 		private void Button_Clicked(object sender, EventArgs e)
 		{
-			list.Add( usernameEntry.Text.ToUsername() );
-			Navigation.PopModalAsync(animated: true);
-
-			var req = new NewChatRequest(list[0], list[1], sessionID);
-			writer.Write(req);
+			if (usernameEntry.Text.Length > 0)
+			{
+				list.Add( usernameEntry.Text.ToUsername() );
+				Navigation.PopModalAsync(animated: true);
+				Task.Run( () => {
+					var req = new NewChatRequest(list[0], list[1], sessionID);
+					writer.Write(req);
+				});
+			}
 		}
 	}
 }

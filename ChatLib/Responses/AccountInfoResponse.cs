@@ -26,13 +26,6 @@ namespace ChatLib.Responses
 			GroupChats = (ChatInfo[])info.GetValue( "GroupChats", typeof(ChatInfo[]));
 		}
 
-		public static AccountInfoResponse Read(BinaryFormatterReader reader, long sessionID)
-		{
-			ChatInfo[] SimpleChats = (ChatInfo[])reader.Read();
-			ChatInfo[] GroupChats = (ChatInfo[])reader.Read();
-			return new AccountInfoResponse( SimpleChats, GroupChats, sessionID);
-		}
-
 		public override void GetObjectData(SerializationInfo info, StreamingContext context)
 		{
 			info.AddValue("SessionID", SessionID);
