@@ -256,7 +256,7 @@ namespace ChatServer
 
 			lock (this)
 			{
-				if (users.Length == 2)
+				if ( users.Length == 2 )
 				{
 					// simple chat
 					var chatID = GetChatID(users[0], users[1]);
@@ -284,7 +284,7 @@ namespace ChatServer
 
 					return (true, info, string.Empty);
 				}
-				else if ( users.Length > 2)
+				else if ( users.Length > 2 )
 				{
 					// group chat
 					var chatID = GetChatID(users);
