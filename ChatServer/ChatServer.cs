@@ -1,5 +1,4 @@
 ﻿using ChatServer.Databases;
-using ChatServer.DatabaseRequests;
 using System;
 using System.Collections.Generic;
 using ChatLib;
@@ -13,6 +12,9 @@ using ChatLib.Responses;
 using ChatLib.BinaryFormatters;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
+using Microsoft.VisualBasic;
+using ChatLib.Messages;
+using System.Reflection.Metadata;
 
 namespace ChatServer
 {
@@ -30,8 +32,9 @@ namespace ChatServer
 		private bool killDB = false;
 		//private readonly Queue<(ServerSession, IDatabaseRequest)> databaseRequests = new Queue<(ServerSession, IDatabaseRequest)>();
 		
-		private readonly ConcurrentDictionary<string, BinaryFormatterWriter>
-			writersPerUsername = new ConcurrentDictionary<string, BinaryFormatterWriter>();
+		private readonly HashSet<Username> loggedInUsers = new HashSet<Username>();
+		private readonly ConcurrentDictionary<Username, BinaryFormatterWriter>
+			writersPerUsername = new ConcurrentDictionary<Username, BinaryFormatterWriter>();
 		private readonly HashSet<long> activeSessions = new HashSet<long>();
 
 		private readonly IDatabase database;
@@ -57,40 +60,40 @@ namespace ChatServer
 			//}));
 			//DBThread.Start();
 		}
-		private void DBRequestsHandler(Queue<(ServerSession, IDatabaseRequest)> queue, IDatabase database, ref bool killDB)
-		{
-			while (!killDB)
-			{
-				while (queue.Count == 0)
-				{
-					Thread.Sleep(50);
-				}
-				var (session, request) = queue.Dequeue();
-				var requestType = request.type;
-				switch (requestType)
-				{
-					case DatabaseRequestType.CreateAccount:
-						var currRequest = (DatabaseNewAccountRequest)request;
-						if (!database.Contains(email: currRequest.email)
-							&& !database.Contains(username: currRequest.username))
-						{
-							database.AddUser(currRequest.email, currRequest.username,
-								currRequest.password);
-							session.addUserResult = true;
-						}
-						else
-						{
-							session.addUserResult = false;
-						}
-						break;
-					case DatabaseRequestType.Login:
+		//private void DBRequestsHandler(Queue<(ServerSession, IDatabaseRequest)> queue, IDatabase database, ref bool killDB)
+		//{
+		//	while (!killDB)
+		//	{
+		//		while (queue.Count == 0)
+		//		{
+		//			Thread.Sleep(50);
+		//		}
+		//		var (session, request) = queue.Dequeue();
+		//		var requestType = request.type;
+		//		switch (requestType)
+		//		{
+		//			case DatabaseRequestType.CreateAccount:
+		//				var currRequest = (DatabaseNewAccountRequest)request;
+		//				if (!database.Contains(email: currRequest.email)
+		//					&& !database.Contains(username: currRequest.username))
+		//				{
+		//					database.AddUser(currRequest.email, currRequest.username,
+		//						currRequest.password);
+		//					session.addUserResult = true;
+		//				}
+		//				else
+		//				{
+		//					session.addUserResult = false;
+		//				}
+		//				break;
+		//			case DatabaseRequestType.Login:
 
-						break;
-					default:
-						break;
-				}
-			}
-		}
+		//				break;
+		//			default:
+		//				break;
+		//		}
+		//	}
+		//}
 		public void Run()
 		{
 			TcpListener listener = new TcpListener(port);
@@ -101,9 +104,9 @@ namespace ChatServer
 			long currSessionID;
 			while (true)
 			{
-				Console.WriteLine("Waiting for connection...");
+				Console.Out.WriteLine("Waiting for connection...");
 				client = listener.AcceptTcpClient();
-				Console.WriteLine("Connection accepted.");
+				Console.Out.WriteLine("Connection accepted.");
 				lock (activeSessions)
 				{
 					while ( activeSessions.Contains(sessionID))
@@ -115,7 +118,7 @@ namespace ChatServer
 				Task.Run(() => {
 					new ServerSession(client, this, currSessionID).HandleConnection();
 				});
-				Console.WriteLine("New session created.");
+				Console.Out.WriteLine("New session created.");
 			}
 		}
 		public class ServerSession
@@ -132,7 +135,10 @@ namespace ChatServer
 
 			Response resp;
 			Request req;
+			Message msg;
+			Username[] users;
 			ChatInfo info;
+			Username loggedUser = new Username();
 			bool success; string reason;
 
 			private readonly BinaryFormatterReader br;
@@ -161,19 +167,23 @@ namespace ChatServer
 					while (true)
 					{
 						HandleNonLoggedInRequests();
-						
-						// logged in
 
 						HandleLoggedInRequests();
 					}
-				} 
-				catch ( EndOfStreamException )
-				{
-
 				}
-				catch (SerializationException)
+				catch (SerializationException e)
 				{
-
+					if ( !loggedUser.Equals( new Username() ) )
+					{
+						server.loggedInUsers.Remove(loggedUser);
+						server.writersPerUsername.TryRemove(loggedUser, out var writer);
+						writer.Close();
+						loggedIn = false; // not neccessary
+					}
+				}
+				catch ( Exception e )
+				{
+					Console.Error.WriteLine("Exception -> {}", e);
 				}
 			}
 
@@ -201,6 +211,26 @@ namespace ChatServer
 							{
 								resp = new FailResponse(reason, sessionID);
 							}
+							info = null;
+							reason = null;
+							break;
+						case RequestType.NewMessage:
+							NewMessageRequest NMReq = (NewMessageRequest)req;
+							(success, users, reason) = server.database.AddMessage(NMReq.chatType, NMReq.chatID, NMReq.message);
+
+							// (future) confirm receiving the message
+
+							foreach (Username user in users)
+							{
+								server.writersPerUsername.TryGetValue(user, out var writer);
+								if (writer != null) {
+									writer.Write( new AddMessageResponse( NMReq.chatType, NMReq.chatID, NMReq.message, sessionID) );
+								}
+							}
+
+							msg = null;
+							users = null;
+							reason = null;
 							break;
 						default:
 							resp = new FailResponse("Unsupported request type detected.", sessionID);
@@ -233,7 +263,7 @@ namespace ChatServer
 					switch ( req.Type )
 					{
 						case RequestType.NewAccount:
-							NewAccountRequest NAReq = (NewAccountRequest)req; //.Read(br, sessionID);
+							NewAccountRequest NAReq = (NewAccountRequest)req;
 							(success, reason) = server.database.AddUser(NAReq.email, NAReq.username, NAReq.password);
 							if (success)
 							{
@@ -243,19 +273,27 @@ namespace ChatServer
 							{
 								resp = new FailResponse(reason, sessionID);
 							}
+							reason = null;
 							break;
 						case RequestType.SignIn:
-							SignInRequest SIReq = (SignInRequest)req; //SignInRequest.Read(br, sessionID);
+							SignInRequest SIReq = (SignInRequest)req; 
 							(success, reason) = server.database.SignIn(SIReq.username, SIReq.password);
 							if (success)
 							{
 								resp = GetAccountInfo(SIReq.username);
-								loggedIn = true;
+								if ( server.writersPerUsername.TryAdd(SIReq.username, bw) )
+								{
+									loggedUser = SIReq.username;
+									server.loggedInUsers.Add(loggedUser);
+									loggedIn = true;
+								}
+								
 							}
 							else
 							{
 								resp = new FailResponse(reason, sessionID);
 							}
+							reason = null;
 							break;
 						default:
 							resp = new FailResponse("Unsupported request type detected.", sessionID);
