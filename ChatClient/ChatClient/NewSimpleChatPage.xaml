@@ -3,11 +3,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="ChatClient.NewSimpleChatPage">
 	<ContentPage.Content>
-        <StackLayout Orientation="Horizontal" VerticalOptions="Center">
+        <StackLayout Orientation="Vertical" VerticalOptions="Center">
 			<Entry x:Name="usernameEntry" Placeholder="Enter username here" HorizontalOptions="FillAndExpand"
 				   HorizontalTextAlignment="Center"/>
 			<Button Text="Create Chat" Clicked="Button_Clicked"
-					HorizontalOptions="End"/>
+					HorizontalOptions="Center"/>
 		</StackLayout>
     </ContentPage.Content>
 </ContentPage>
