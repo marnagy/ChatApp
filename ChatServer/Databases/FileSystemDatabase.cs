@@ -1,4 +1,5 @@
 ﻿using ChatLib;
+using ChatLib.BinaryFormatters;
 using ChatLib.Messages;
 using ChatServer.Databases;
 using System;
@@ -6,6 +7,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.IsolatedStorage;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -22,6 +25,7 @@ namespace ChatServer
 		private const string simpleChatInfoFileName = ".chInfo";
 		private const string groupChatInfoFileName = ".gchInfo";
 		private const string IDFileName = ".msgid";
+		private const string chatNameFileName = ".nm";
 
 		public const char simpleChatSeparator = ' ';
 
@@ -84,49 +88,50 @@ namespace ChatServer
 		private bool _initialized = false;
 		public bool initialized { get => _initialized; }
 
-		public (bool success, string ReasonOrID) AddMessage(ChatInfo info, Message message)
+		public (bool success, Username[] users, string ReasonOrID) AddMessage(ChatType type, long chatID, Message message)
 		{
 			lock (this)
 			{
 				switch (message.Type)
 				{
 					case MessageType.TextMessage:
-						TextMessage msg = (TextMessage)message;
-						var currChatDirPath = GetChatDir(info);
+						//TextMessage msg = (TextMessage)message;
+						DirectoryInfo currChatDir = GetChatDir(type, chatID);
 						var dt = DateTime.UtcNow;
 						var chatsOfDay = string.Format("{0:D4}-{1:D2}-{2:D2}", dt.Year, dt.Month, dt.Day);
-						string currentMsgID = File.ReadAllText(Path.Combine(currChatDirPath, IDFileName));
-						if (long.TryParse(currentMsgID, out long MsgID))
-						{
-							// save message to 
-							using (var writer = File.AppendText(Path.Combine(currChatDirPath, chatsOfDay)))
-							{
-								/* RESEARCH ON XML */
-							}
-							File.WriteAllText(Path.Combine(currChatDirPath, IDFileName), (++MsgID).ToString());
-							return (true, MsgID.ToString());
-						}
-						else
-						{
-							return (false, "Unsupported messageID format.");
-						}
+						//string currentMsgID = File.ReadAllText(Path.Combine(currChatDir.FullName, IDFileName));
+						//if (long.TryParse(currentMsgID, out long MsgID))
+						//{
+							// save message
+							BinaryFormatterWriter bfw = new BinaryFormatterWriter(new BinaryFormatter(), File.AppendText( Path.Combine(currChatDir.FullName, chatsOfDay) ).BaseStream );
+							bfw.Write(message);
+							bfw.Close();
+							
+							Username[] users = File.ReadAllLines( Path.Combine(currChatDir.FullName, infoFileName) ).Select( text => text.ToUsername() ).ToArray();
+
+							//File.WriteAllText(Path.Combine(currChatDir.FullName, IDFileName), (++MsgID).ToString());
+							return (true, users, string.Empty);
+						//}
+						//else
+						//{
+						//	return (false, null, "Unsupported messageID format.");
+						//}
 					default:
-						return (false, "Unsupported message type.");
+						return (false, null, "Unsupported message type.");
 				}
 			}
 		}
-		private string GetChatDir(ChatInfo info)
+
+		private DirectoryInfo GetChatDir(ChatType type, long chatID)
 		{
-			switch (info.Type)
+			switch (type)
 			{
 				case ChatType.Simple:
 					return Directory.CreateDirectory(
-						Path.Combine(simpleChatsDir.FullName, info.ID.ToString())).FullName;
-					break;
+						Path.Combine(simpleChatsDir.FullName, chatID.ToString()));
 				case ChatType.Group:
 					return Directory.CreateDirectory(
-						Path.Combine( groupChatsDir.FullName, info.ID.ToString())).FullName;
-					break;
+						Path.Combine( groupChatsDir.FullName, chatID.ToString()));
 				default:
 					throw new FormatException("Unsupported chat type.");
 			}
@@ -187,11 +192,6 @@ namespace ChatServer
 		//		throw new NotImplementedException();
 		//	}
 		//	}
-
-		private void AddFirstMessage()
-		{
-			throw new NotImplementedException();
-		}
 
 		private (string name, long messageID) GetSimpleChatInfo(string line)
 		{
@@ -266,11 +266,15 @@ namespace ChatServer
 
 					using ( var infoFile = new StreamWriter( File.Create( Path.Combine(chatDir.FullName, infoFileName) ) ) )
 					{
-						infoFile.WriteLine(info.Name);
 						foreach (var username in info.participants)
 						{
 							infoFile.WriteLine( username.ToString() );
 						}
+					}
+
+					using ( var infoFile = new StreamWriter( File.Create( Path.Combine(chatDir.FullName, chatNameFileName) ) ) )
+					{
+						infoFile.WriteLine(info.Name);
 					}
 
 					foreach (var username in users)
@@ -283,20 +287,21 @@ namespace ChatServer
 				else if ( users.Length > 2)
 				{
 					// group chat
-					var chatID = GetChatID(users);
-					var chatDir = simpleChatsDir.CreateSubdirectory(chatID.ToString());
+					//var chatID = GetChatID(users);
+					//var chatDir = simpleChatsDir.CreateSubdirectory(chatID.ToString());
 
-					var info = new ChatInfo(ChatType.Group, chatID, GroupChatDefaultFileName(users), users);
+					//var info = new ChatInfo(ChatType.Group, chatID, GroupChatDefaultFileName(users), users);
 
-					using ( var infoFile = new StreamWriter( File.Create( Path.Combine(chatDir.FullName, infoFileName) ) ) )
-					{
-						infoFile.WriteLine( info.ID.ToString() );
-						foreach (var username in info.participants)
-						{
-							infoFile.WriteLine( username.ToString() );
-						}
-					}
-					return (true, info, string.Empty);
+					//using ( var infoFile = new StreamWriter( File.Create( Path.Combine(chatDir.FullName, infoFileName) ) ) )
+					//{
+					//	infoFile.WriteLine( info.ID.ToString() );
+					//	foreach (var username in info.participants)
+					//	{
+					//		infoFile.WriteLine( username.ToString() );
+					//	}
+					//}
+					//return (true, info, string.Empty);
+					return (false, null, "Not yet implemented");
 				}
 				else
 				{
@@ -374,7 +379,7 @@ namespace ChatServer
 
 		public bool Contains(Email email)
 		{
-			throw new NotImplementedException();
+			return allEmails.Contains(email);
 		}
 
 		private void CreateGroupChatList(DirectoryInfo userDir)
@@ -509,7 +514,7 @@ namespace ChatServer
 
 				foreach (var ID in chatIDs)
 				{
-					list.Add( ChatInfo.FromDictionary(type, Directory.CreateDirectory(Path.Combine(chatsDir.FullName, ID) ), infoFileName ) );
+					list.Add( ChatInfo.FromDictionary(type, Directory.CreateDirectory(Path.Combine(chatsDir.FullName, ID) ), infoFileName, chatNameFileName ) );
 				}
 
 				return list.ToArray();

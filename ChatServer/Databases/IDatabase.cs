@@ -13,7 +13,7 @@ namespace ChatServer.Databases
 		(bool successful, string reasonOfFail) SignIn(Username username, Password password);
 		ChatInfo[] GetChats(Username username, ChatType type);
 		bool MakeOnline(User user);
-		(bool success, string ReasonOrID) AddMessage(ChatInfo info, Message message);
+		(bool success, Username[] users, string ReasonOrID) AddMessage(ChatType type, long chatID, Message message);
 		/// <summary>
 		/// Creates new chat of 2 users
 		/// </summary>
