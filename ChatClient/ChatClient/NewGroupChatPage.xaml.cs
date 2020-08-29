@@ -62,7 +62,12 @@ namespace ChatClient
 					users.Add( val.ToUsername() );
 				}
 
-				writer.Write( new NewChatRequest( myUsername, users.ToArray(), sessionID) );
+				var set = users.ToHashSet();
+
+				if (set.Count >= 2)
+				{
+					writer.Write( new NewChatRequest( myUsername, users.ToArray(), sessionID) );
+				}
 			});
 		}
 	}
