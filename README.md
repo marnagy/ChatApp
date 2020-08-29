@@ -1,27 +1,18 @@
 # Real-time Chat
 
+## Info
+
+Implementation of Real-time chat including simple chat and group chat.
+
+
 ---------
 
 ## Client
 
 ### To Be Done
 
-- [ ] Main Page layout
-- [ ] Chat layout
-- [ ] Local storage to send less data when logging in (optional)
-
-### Done
-
-- [x] Login Page
+- [ ] Fix layout of LoginPage
+- [ ] Dark theme
+- [ ] Resort Chats when new chat appears
 
 ## Server
-
- 
-
-### To Be Done
-
-- [ ] 
-
-### Done
-
-- [ ] 
