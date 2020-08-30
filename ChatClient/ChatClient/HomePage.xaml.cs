@@ -63,6 +63,7 @@ namespace ChatClient
 								var info = CCResp.Info;
 								chatViews.Insert(0, new ChatInfoCell(info) );
 								chats.Add((info.Type, info.ID), info);
+								pages.Add((info.Type, info.ID), new ChatPage(this.app, myUsername, info, writer, sessionID) );
 								break;
 							case ResponseType.AddMessage:
 								AddMessageResponse AMResp = (AddMessageResponse)resp;
