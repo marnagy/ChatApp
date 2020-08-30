@@ -23,6 +23,7 @@ namespace ChatClient
 		private readonly BinaryFormatterWriter writer;
 		private readonly long sessionID;
 		private readonly ObservableCollection<Message> messages;
+		public readonly ListView listView;
 		public ChatPage(App app, Username user, ChatInfo info, BinaryFormatterWriter writer, long sessionID)
 		{
 			if ( info == null || writer == null ) throw new ArgumentNullException();
@@ -34,9 +35,9 @@ namespace ChatClient
 
 			InitializeComponent();
 			messages = info.GetMessages();
-
+			listView = list;
 			list.ItemsSource = messages;
-			list.ChildAdded += ScrollDown;
+			//list.ChildAdded += ScrollDown;
 		}
 		private void ScrollDown(object sender, EventArgs e)
 		{
@@ -64,7 +65,7 @@ namespace ChatClient
 		private void ScrollDown(object sender, ElementEventArgs e)
 		{
 			var listView = e.Element as ListView;
-			listView.ScrollTo(messages[messages.Count - 1], ScrollToPosition.MakeVisible, animated: true);
+			//listView.ScrollTo(messages[messages.Count - 1], ScrollToPosition.MakeVisible, animated: true);
 
 		}
 	}
