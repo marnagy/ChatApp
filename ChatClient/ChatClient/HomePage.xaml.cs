@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -157,6 +158,8 @@ namespace ChatClient
 			ChatPage page;
 			if ( pages.TryGetValue((item.Info.Type, item.Info.ID), out page))
 			{
+				var messages = item.Info.GetMessages();
+				page.listView.ScrollTo(messages[messages.Count - 1], ScrollToPosition.End, animated: false);
 			}
 			else
 			{
