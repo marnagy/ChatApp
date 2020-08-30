@@ -22,6 +22,8 @@ namespace ChatClient
 		private readonly Username myUsername;
 		private readonly BinaryFormatterWriter writer;
 		private readonly long sessionID;
+		private readonly ObservableCollection<Message> messages;
+		public readonly ListView listView;
 		public ChatPage(App app, Username user, ChatInfo info, BinaryFormatterWriter writer, long sessionID)
 		{
 			if ( info == null || writer == null ) throw new ArgumentNullException();
@@ -32,7 +34,14 @@ namespace ChatClient
 			this.sessionID = sessionID;
 
 			InitializeComponent();
-			list.ItemsSource = info.GetMessages();
+			messages = info.GetMessages();
+			listView = list;
+			list.ItemsSource = messages;
+			//list.ChildAdded += ScrollDown;
+		}
+		private void ScrollDown(object sender, EventArgs e)
+		{
+			list.ScrollTo(messages[messages.Count - 1], ScrollToPosition.MakeVisible, animated: true);
 		}
 
 		private void button_Clicked(object sender, EventArgs e)
@@ -51,6 +60,13 @@ namespace ChatClient
 		{
 			//var msg = e.Item as Message;
 			//DisplayAlert("Item tapped", msg.text, "OKAY");
+		}
+
+		private void ScrollDown(object sender, ElementEventArgs e)
+		{
+			var listView = e.Element as ListView;
+			//listView.ScrollTo(messages[messages.Count - 1], ScrollToPosition.MakeVisible, animated: true);
+
 		}
 	}
 }

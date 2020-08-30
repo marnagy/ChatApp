@@ -205,7 +205,14 @@ namespace ChatServer
 
 							if (success)
 							{
-								resp = new ChatCreatedResponse(info, sessionID);
+								foreach (Username user in info.participants)
+								{
+									if ( server.writersPerUsername.TryGetValue(user, out var writer))
+									{
+										writer.Write( new ChatCreatedResponse(info, sessionID) );
+									}
+								}
+
 							}
 							else
 							{

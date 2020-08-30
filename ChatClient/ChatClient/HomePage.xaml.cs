@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -25,6 +26,7 @@ namespace ChatClient
 
 		private readonly ObservableCollection<ChatInfoCell> chatViews = new ObservableCollection<ChatInfoCell>();
 		private readonly Dictionary<(ChatType, long), ChatInfo> chats = new Dictionary<(ChatType, long), ChatInfo>();
+		private readonly Dictionary<(ChatType, long), ChatPage> pages = new Dictionary<(ChatType, long), ChatPage>();
 		private readonly HashSet<Username> simpleChatUsernames = new HashSet<Username>();
 		private readonly long sessionID;
 		private readonly Username myUsername;
@@ -61,19 +63,25 @@ namespace ChatClient
 								var info = CCResp.Info;
 								chatViews.Insert(0, new ChatInfoCell(info) );
 								chats.Add((info.Type, info.ID), info);
+								pages.Add((info.Type, info.ID), new ChatPage(this.app, myUsername, info, writer, sessionID) );
 								break;
 							case ResponseType.AddMessage:
 								AddMessageResponse AMResp = (AddMessageResponse)resp;
-								chats.TryGetValue((AMResp.chatType, AMResp.chatID), out var chat);
-								var msg = AMResp.message;
-								if ( msg.SenderUsername.Equals(myUsername))
+								if ( chats.TryGetValue((AMResp.chatType, AMResp.chatID), out var chat) && 
+									pages.TryGetValue((AMResp.chatType, AMResp.chatID), out var page) )
 								{
-									msg.column = 2;
-									msg.bcgColor = Color.LightBlue;
-									msg.horizontalOpt = LayoutOptions.End;
-									msg.textAlignment = TextAlignment.End;
+									var msg = AMResp.message;
+									if ( msg.SenderUsername.Equals(myUsername))
+									{
+										msg.column = 2;
+										msg.bcgColor = Color.LightBlue;
+										msg.horizontalOpt = LayoutOptions.End;
+										msg.textAlignment = TextAlignment.End;
+									}
+									chat.AddMessage(msg);
+									page.listView.ScrollTo(msg, ScrollToPosition.End, animated: true);
 								}
-								chat.AddMessage(msg);
+								
 								break;
 							default:
 								break;
@@ -102,6 +110,7 @@ namespace ChatClient
 						}
 					}
 					while (! this.chats.TryAdd((chat.Type, chat.ID), chat) );
+					while (! this.pages.TryAdd((chat.Type, chat.ID), new ChatPage(this.app, myUsername, chat, this.writer, sessionID)) );
 					chats.Add(chat);
 				}
 			}
@@ -121,6 +130,7 @@ namespace ChatClient
 						}
 					}
 					while (! this.chats.TryAdd((chat.Type, chat.ID), chat) );
+					while (! this.pages.TryAdd((chat.Type, chat.ID), new ChatPage(this.app, myUsername, chat, this.writer, sessionID)) );
 					chats.Add(chat);
 				}
 			}
@@ -146,7 +156,18 @@ namespace ChatClient
 		{
 			var item = e.Item as ChatInfoCell;
 			(sender as ListView).SelectedItem = null;
-			Navigation.PushAsync( new ChatPage(this.app, this.myUsername, item.Info, this.writer, sessionID) );
+			ChatPage page;
+			if ( pages.TryGetValue((item.Info.Type, item.Info.ID), out page))
+			{
+				var messages = item.Info.GetMessages();
+				page.listView.ScrollTo(messages[messages.Count - 1], ScrollToPosition.End, animated: false);
+			}
+			else
+			{
+				page = new ChatPage(this.app, this.myUsername, item.Info, this.writer, sessionID);
+				pages.Add((item.Info.Type, item.Info.ID), page);
+			}
+			Navigation.PushAsync( page );
 		}
 
 		private void newChat_Click(object sender, EventArgs e)
