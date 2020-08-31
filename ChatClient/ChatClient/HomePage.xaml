@@ -27,12 +27,14 @@
 				<Grid.RowDefinitions>
 					<RowDefinition Height="Auto"/>
 				</Grid.RowDefinitions>
+				<Button Text="Show Online contacts" Clicked="ShowOnlineContacts_Click"
+						Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2"/>
 				<Button x:Name="newChatBtn" Text="Start New Chat"
 						Clicked="newChat_Click" Grid.Column="0"
-						Visual="Material"/>
+						Visual="Material" Grid.Row="1"/>
 				<Button x:Name="newGroupChatBtn" Text="Start New Group Chat"
 						Clicked="newGroupChat_Click" Grid.Column="1"
-						Visual="Material"/>
+						Visual="Material" Grid.Row="1"/>
 			</Grid>
 		</StackLayout>
 	</ContentPage.Content>

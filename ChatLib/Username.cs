@@ -34,6 +34,16 @@ namespace ChatLib
 			info.AddValue( ValueSerializationName, Value);
 		}
 
+		public static bool operator ==(Username a, Username b)
+		{
+			return a.Value == b.Value;
+		}
+
+		public static bool operator !=(Username a, Username b)
+		{
+			return a.Value != b.Value;
+		}
+
 		public override string ToString()
 		{
 			return Value;

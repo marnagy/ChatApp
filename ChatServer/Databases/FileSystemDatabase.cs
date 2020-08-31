@@ -49,6 +49,7 @@ namespace ChatServer
 		private readonly HashSet<Username> onlineUsers = new HashSet<Username>();
 		private readonly HashSet<long> simpleChatIDs = new HashSet<long>();
 		private readonly HashSet<long> groupChatIDs = new HashSet<long>();
+		private readonly Dictionary<Username, HashSet<Username>> contacts = new Dictionary<Username, HashSet<Username>>();
 
 		private ulong groupIDGenerator = 0;
 
@@ -280,6 +281,7 @@ namespace ChatServer
 					foreach (var username in users)
 					{
 						AddChat(info.Type, chatID, username);
+						AddContact(username, users);
 					}
 
 					return (true, info, string.Empty);
@@ -308,6 +310,7 @@ namespace ChatServer
 					foreach (var username in users)
 					{
 						AddChat(info.Type, chatID, username);
+						AddContact(username, users);
 					}
 
 					return (true, info, string.Empty);
@@ -316,6 +319,25 @@ namespace ChatServer
 				else
 				{
 					return (false, null, "Insufficient number of users.");
+				}
+			}
+		}
+
+		private void AddContact(Username username, Username[] users)
+		{
+			lock (this)
+			{
+				if ( contacts.TryGetValue(username, out var currContacts) )
+				{
+					foreach (var user in users)
+					{
+						if ( !user.Equals(username))
+						{
+							currContacts.Add(user);
+						}
+					}
+					//contacts.Remove(username);
+					//contacts.Add( username, currContacts );
 				}
 			}
 		}
@@ -450,17 +472,70 @@ namespace ChatServer
 						salt, hashIterations).GetBytes(hashKey);
 					for (int i = 0; i < hashKey; i++)
 					{
-						if (hashBytes[i+saltLength] != hash[i])
+						if (hashBytes[i + saltLength] != hash[i])
 						{
 							return (false, signInFailMssg);
 						}
 					}
+
+					onlineUsers.Add(username);
+					LoadContacts(username);
+
 					return (true, string.Empty);
 				}
 				else
 				{
 					return (false, signInFailMssg);
 				}
+			}
+		}
+
+		private void LoadContacts(Username username)
+		{
+			lock (this)
+			{
+				var dirs = usersDir.GetDirectories(username.ToString());
+				if (dirs.Length == 0)
+				{
+					return;
+				}
+				else if (dirs.Length > 1)
+				{
+					return;
+				}
+
+				DirectoryInfo userDir = dirs[0];
+				var contacts = new HashSet<Username>();
+				var simpleChats = new List<long>();
+				var groupChats = new List<long>();
+				foreach (var line in File.ReadLines(Path.Combine(userDir.FullName, simpleChatInfoFileName)))
+				{
+					simpleChats.Add( long.Parse(line) );
+				}
+
+				foreach (var line in File.ReadLines(Path.Combine(userDir.FullName, groupChatInfoFileName)))
+				{
+					groupChats.Add( long.Parse(line) );
+				}
+
+				foreach (var chat in simpleChats)
+				{
+					var usernames = File.ReadAllLines(Path.Combine(simpleChatsDir.FullName, chat.ToString(), infoFileName));
+					foreach (var contact in usernames)
+					{
+						contacts.Add( contact.ToUsername() );
+					}
+				}
+				foreach (var chat in groupChats)
+				{
+					var usernames = File.ReadAllLines(Path.Combine(simpleChatsDir.FullName, chat.ToString(), infoFileName));
+					foreach (var contact in usernames)
+					{
+						contacts.Add( contact.ToUsername() );
+					}
+				}
+
+				this.contacts.Add(username, contacts);
 			}
 		}
 
@@ -528,6 +603,50 @@ namespace ChatServer
 				}
 
 				return list.ToArray();
+			}
+		}
+
+		public void UnloadContacts(Username username)
+		{
+			lock (this)
+			{
+				contacts.Remove(username);
+			}
+		}
+
+		public (bool success, Username[] users, string reason) GetOnlineContacts(Username username)
+		{
+			lock (this)
+			{
+				if ( !onlineUsers.Contains(username))
+				{
+					return (false, null, "The username does not exist.");
+				}
+
+				if ( contacts.TryGetValue(username, out var currContacts))
+				{
+					List<Username> onlineContacts = new List<Username>();
+					foreach (var user in currContacts)
+					{
+						if ( user != username && onlineUsers.Contains(user) )
+						{
+							onlineContacts.Add(user);
+						}
+					}
+					return (true, onlineContacts.ToArray(), string.Empty);
+				}
+				else
+				{
+					return (false, null, "Error: No contacts loaded.");
+				}
+			}
+		}
+
+		public void MakeOffline(Username username)
+		{
+			lock (this)
+			{
+				onlineUsers.Remove(username);
 			}
 		}
 	}
