@@ -160,14 +160,10 @@ namespace ChatClient
 			if ( pages.TryGetValue((item.Info.Type, item.Info.ID), out page))
 			{
 				var messages = item.Info.GetMessages();
-				page.listView.ScrollTo(messages[messages.Count - 1], ScrollToPosition.End, animated: false);
+				if (messages.Count > 0)
+					page.listView.ScrollTo(messages[messages.Count - 1], ScrollToPosition.End, animated: false);
+				Navigation.PushAsync( page );
 			}
-			else
-			{
-				page = new ChatPage(this.app, this.myUsername, item.Info, this.writer, sessionID);
-				pages.Add((item.Info.Type, item.Info.ID), page);
-			}
-			Navigation.PushAsync( page );
 		}
 
 		private void newChat_Click(object sender, EventArgs e)
