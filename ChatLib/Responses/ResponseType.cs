@@ -10,6 +10,7 @@ namespace ChatLib.Responses
 		ChatCreated,
 		AddMessage,
 		Success,
-		Fail
+		Fail,
+		OnlineContacts
 	}
 }
