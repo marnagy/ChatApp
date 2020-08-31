@@ -177,6 +177,8 @@ namespace ChatServer
 					{
 						server.loggedInUsers.Remove(loggedUser);
 						server.writersPerUsername.TryRemove(loggedUser, out var writer);
+						server.database.MakeOffline(loggedUser);
+						server.database.UnloadContacts(loggedUser);
 						writer.Close();
 						loggedIn = false; // not neccessary
 					}
@@ -238,6 +240,15 @@ namespace ChatServer
 							msg = null;
 							users = null;
 							reason = null;
+							break;
+						case RequestType.GetOnlineContacts:
+							OnlineContactsRequest OCReq = (OnlineContactsRequest)req;
+							(success, users, reason) = server.database.GetOnlineContacts(OCReq.username);
+
+							if (success)
+							{
+								resp = new OnlineContactsResponse(users, sessionID);
+							}
 							break;
 						default:
 							resp = new FailResponse("Unsupported request type detected.", sessionID);
