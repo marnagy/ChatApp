@@ -38,5 +38,8 @@ namespace ChatServer.Databases
 		/// <param name="email"></param>
 		/// <returns>If there is a user with given email address.</returns>
 		bool Contains(Email email);
+		void UnloadContacts(Username loggedUser);
+		(bool success, Username[] users, string reason) GetOnlineContacts(Username username);
+		void MakeOffline(Username loggedUser);
 	}
 }
