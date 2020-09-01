@@ -28,6 +28,7 @@ namespace ChatLib.Messages
 			info.AddValue("chatID", ChatID);
 			info.AddValue("senderUserName", SenderUsername);
 			info.AddValue("DateTime", Datetime);
+			info.AddValue("MsgID", msgID);
 
 			info.AddValue("Text", text);
 		}
