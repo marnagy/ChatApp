@@ -41,5 +41,6 @@ namespace ChatServer.Databases
 		void UnloadContacts(Username loggedUser);
 		(bool success, Username[] users, string reason) GetOnlineContacts(Username username);
 		void MakeOffline(Username loggedUser);
+		(bool success, string reason) ChangePassword(Username username, Password oldPassword, Password newPassword);
 	}
 }

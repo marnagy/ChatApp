@@ -649,5 +649,43 @@ namespace ChatServer
 				onlineUsers.Remove(username);
 			}
 		}
+
+		public (bool success, string reason) ChangePassword(Username username, Password oldPassword, Password newPassword)
+		{
+			lock (this)
+			{
+				if ( allUsernames.Contains(username) && onlineUsers.Contains(username) )
+				{
+					string[] lines = File.ReadAllLines(Path.Combine(usersDir.FullName, username.ToString(), infoFileName));
+					// load hash
+					string savedPasswordHash = lines[1];
+					//lines = null;
+					// convert hash to byte[]
+					byte[] hashBytes = Convert.FromBase64String(savedPasswordHash);
+					// extract salt
+					byte[] salt = new byte[saltLength];
+					Array.Copy(hashBytes, 0, salt, 0, saltLength);
+
+					byte[] hash = new Rfc2898DeriveBytes(oldPassword.ToString(),
+						salt, hashIterations).GetBytes(hashKey);
+					for (int i = 0; i < hashKey; i++)
+					{
+						if (hashBytes[i + saltLength] != hash[i])
+						{
+							return (false, "Old Password does not match.");
+						}
+					}
+
+					// save new password
+					CreateUserInfo( Directory.CreateDirectory( Path.Combine(usersDir.FullName, username.ToString()) ), lines[0].ToEmail(), newPassword);
+
+					return (true, string.Empty);
+				}
+				else
+				{
+					return (false, "User is not online or does not exist in database.");
+				}
+			}
+		}
 	}
 }
