@@ -11,6 +11,7 @@ namespace ChatLib.Responses
 		AddMessage,
 		Success,
 		Fail,
-		OnlineContacts
+		OnlineContacts,
+		ChangePassword
 	}
 }
