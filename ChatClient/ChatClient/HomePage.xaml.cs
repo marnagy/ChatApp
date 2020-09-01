@@ -30,6 +30,7 @@ namespace ChatClient
 		private readonly Dictionary<(ChatType, long), ChatInfo> chats = new Dictionary<(ChatType, long), ChatInfo>();
 		private readonly Dictionary<(ChatType, long), ChatPage> pages = new Dictionary<(ChatType, long), ChatPage>();
 		private readonly OnlineContactsPage onlineContactsPage;
+		private readonly SettingsPage settingsPage;
 
 		private readonly long sessionID;
 		private readonly Username myUsername;
@@ -47,6 +48,7 @@ namespace ChatClient
 			this.writer = writer;
 			this.sessionID = sessionID;
 			this.onlineContactsPage = new OnlineContactsPage(onlineContacts);
+			this.settingsPage = new SettingsPage(myUsername, writer, sessionID);
 			InitializeComponent();
 
 			LoadChats(aiResp.SimpleChats, aiResp.GroupChats);
@@ -94,12 +96,20 @@ namespace ChatClient
 									onlineContacts.Add( new StringCell(){ value = user.ToString() } );
 								}
 								break;
+							case ResponseType.Success:
+								Device.BeginInvokeOnMainThread( () => DisplayAlert("Success", "Your password has been changed.", "Okay")
+									);
+								break;
+							case ResponseType.Fail:
+								FailResponse FResp = (FailResponse)resp;
+								Device.BeginInvokeOnMainThread( () => DisplayAlert("Action Failed", FResp.Reason, "Okay")
+									);
+								break;
 							default:
 								break;
 						}
 					}
 				}));
-			ReadingThread.IsBackground = true;
 			OnlineContactsThread = new Thread(new ThreadStart(() =>
 				{
 					while (true)
@@ -108,6 +118,7 @@ namespace ChatClient
 						Thread.Sleep(sleepConst);
 					}
 				}));
+			ReadingThread.IsBackground = true;
 			OnlineContactsThread.IsBackground = true;
 			ReadingThread.Start();
 			OnlineContactsThread.Start();
@@ -187,6 +198,7 @@ namespace ChatClient
 
 		private void newChat_Click(object sender, EventArgs e)
 		{
+
 			var page = new NewSimpleChatPage(myUsername, writer, sessionID);
 
 			Navigation.PushModalAsync( page, animated: true);
@@ -200,7 +212,12 @@ namespace ChatClient
 		}
 		private void ShowOnlineContacts_Click(object sender, EventArgs e)
 		{
-			Navigation.PushAsync( new OnlineContactsPage(onlineContacts), animated: true);
+			Navigation.PushAsync( onlineContactsPage, animated: true);
+		}
+
+		private void SettingsButton_Clicked(object sender, EventArgs e)
+		{
+			Navigation.PushAsync( settingsPage , animated: true);
 		}
 	}
 }

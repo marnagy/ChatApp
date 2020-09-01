@@ -3,14 +3,24 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:d="http://xamarin.com/schemas/2014/forms/design"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:chatlib="clr-namespace:ChatLib;assembly=ChatLib"
+			 xmlns:local="clr-namespace:ChatClient"
 			 mc:Ignorable="d"
              x:Class="ChatClient.HomePage">
 	<ContentPage.BindingContext>
 		<chatlib:ChatType/>
 	</ContentPage.BindingContext>
+	<NavigationPage.TitleView>
+		<StackLayout Orientation="Horizontal" HorizontalOptions="End">
+			<ImageButton Clicked="SettingsButton_Clicked"
+						Source="{local:ImageResource ChatClient.ic_action_settings.png}"
+						 BorderWidth="0" BackgroundColor="Transparent"
+						HorizontalOptions="End"
+						HeightRequest="50" WidthRequest="50"/>
+		</StackLayout>
+	</NavigationPage.TitleView>
 	<ContentPage.Content>
 		<StackLayout Orientation="Vertical">
-			<ListView x:Name="listView" BackgroundColor="GhostWhite"
+			<ListView x:Name="listView" BackgroundColor="Transparent"
 					  ItemTapped="ListView_ItemTapped"
 					  HorizontalOptions="FillAndExpand" VerticalOptions="StartAndExpand">
 				<ListView.ItemTemplate>
