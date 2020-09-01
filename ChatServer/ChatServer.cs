@@ -250,6 +250,19 @@ namespace ChatServer
 								resp = new OnlineContactsResponse(users, sessionID);
 							}
 							break;
+						case RequestType.ChangePassword:
+							ChangePasswordRequest CPReq = (ChangePasswordRequest)req;
+							(success, reason) = server.database.ChangePassword(CPReq.username, CPReq.oldPassword, CPReq.newPassword);
+
+							if (success)
+							{
+								resp = new SuccessResponse(sessionID);
+							}
+							else
+							{
+								resp = new FailResponse(reason, sessionID);
+							}
+							break;
 						default:
 							resp = new FailResponse("Unsupported request type detected.", sessionID);
 							break;
