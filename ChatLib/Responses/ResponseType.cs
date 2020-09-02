@@ -9,6 +9,7 @@ namespace ChatLib.Responses
 		AccountInfo,
 		ChatCreated,
 		AddMessage,
+		DeleteMessage,
 		Success,
 		Fail,
 		OnlineContacts,
