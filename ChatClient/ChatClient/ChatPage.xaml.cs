@@ -39,10 +39,6 @@ namespace ChatClient
 			list.ItemsSource = messages;
 			//list.ChildAdded += ScrollDown;
 		}
-		private void ScrollDown(object sender, EventArgs e)
-		{
-			list.ScrollTo(messages[messages.Count - 1], ScrollToPosition.MakeVisible, animated: true);
-		}
 
 		private void button_Clicked(object sender, EventArgs e)
 		{
@@ -51,22 +47,18 @@ namespace ChatClient
 				string text = editor.Text.Trim();
 				editor.Text = string.Empty;
 				Task.Run(() => 
-					writer.Write( new NewMessageRequest(info.Type, info.ID, new TextMessage(myUsername, 0, text), sessionID) )
+					writer.Write( new NewMessageRequest(info.Type, info.ID, new TextMessage(myUsername, info.ID, text), sessionID) )
 				);
 			}
 		}
 
 		private void list_ItemTapped(object sender, ItemTappedEventArgs e)
 		{
-			//var msg = e.Item as Message;
-			//DisplayAlert("Item tapped", msg.text, "OKAY");
-		}
+			var msg = e.Item as Message;
+			(sender as ListView).SelectedItem = null;
+			var msgOptPage = new ChatMessageOptionsPage(writer, msg, info.Type, myUsername, sessionID);
 
-		private void ScrollDown(object sender, ElementEventArgs e)
-		{
-			var listView = e.Element as ListView;
-			//listView.ScrollTo(messages[messages.Count - 1], ScrollToPosition.MakeVisible, animated: true);
-
+			Navigation.PushAsync(msgOptPage, animated: true);
 		}
 	}
 }
