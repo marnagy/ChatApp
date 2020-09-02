@@ -12,8 +12,7 @@ namespace ChatServer.Databases
 		(bool successful, string reasonOfFail) AddUser(Email email, Username username, Password password);
 		(bool successful, string reasonOfFail) SignIn(Username username, Password password);
 		ChatInfo[] GetChats(Username username, ChatType type);
-		bool MakeOnline(User user);
-		(bool success, Username[] users, string ReasonOrID) AddMessage(ChatType type, long chatID, Message message);
+		(bool success, Username[] users, Message updatedMessage, string ReasonOrID) AddMessage(ChatType type, long chatID, Message message);
 		/// <summary>
 		/// Creates new chat of 2 users
 		/// </summary>
@@ -42,5 +41,6 @@ namespace ChatServer.Databases
 		(bool success, Username[] users, string reason) GetOnlineContacts(Username username);
 		void MakeOffline(Username loggedUser);
 		(bool success, string reason) ChangePassword(Username username, Password oldPassword, Password newPassword);
+		(bool success, Username[] users, string reason) DeleteMessage(ChatType chatType, long chatID, DateTime dateTime);
 	}
 }

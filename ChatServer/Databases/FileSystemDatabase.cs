@@ -11,6 +11,7 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
+using Xamarin.Forms.Internals;
 
 namespace ChatServer
 {
@@ -24,7 +25,6 @@ namespace ChatServer
 		private const string infoFileName = ".info";
 		private const string simpleChatInfoFileName = ".chInfo";
 		private const string groupChatInfoFileName = ".gchInfo";
-		private const string IDFileName = ".msgid";
 		private const string chatNameFileName = ".nm";
 
 		public const char simpleChatSeparator = ' ';
@@ -41,7 +41,6 @@ namespace ChatServer
 		private readonly DirectoryInfo groupChatsDir;
 
 		private readonly RNGCryptoServiceProvider random = new RNGCryptoServiceProvider();
-		private readonly SHA512CryptoServiceProvider sha512 = new SHA512CryptoServiceProvider();
 
 
 		private readonly HashSet<Email> allEmails = new HashSet<Email>();
@@ -50,8 +49,6 @@ namespace ChatServer
 		private readonly HashSet<long> simpleChatIDs = new HashSet<long>();
 		private readonly HashSet<long> groupChatIDs = new HashSet<long>();
 		private readonly Dictionary<Username, HashSet<Username>> contacts = new Dictionary<Username, HashSet<Username>>();
-
-		private ulong groupIDGenerator = 0;
 
 		private FileSystemDatabase()
 		{
@@ -89,36 +86,30 @@ namespace ChatServer
 		private bool _initialized = false;
 		public bool initialized { get => _initialized; }
 
-		public (bool success, Username[] users, string ReasonOrID) AddMessage(ChatType type, long chatID, Message message)
+		public (bool success, Username[] users, Message updatedMessage, string ReasonOrID) AddMessage(ChatType type, long chatID, Message message)
 		{
 			lock (this)
 			{
 				switch (message.Type)
 				{
 					case MessageType.TextMessage:
-						//TextMessage msg = (TextMessage)message;
+						TextMessage clientMsg = (TextMessage)message;
 						DirectoryInfo currChatDir = GetChatDir(type, chatID);
 						var dt = DateTime.UtcNow;
 						var chatsOfDay = string.Format("{0:D4}-{1:D2}-{2:D2}", dt.Year, dt.Month, dt.Day);
-						//string currentMsgID = File.ReadAllText(Path.Combine(currChatDir.FullName, IDFileName));
-						//if (long.TryParse(currentMsgID, out long MsgID))
-						//{
-							// save message
-							BinaryFormatterWriter bfw = new BinaryFormatterWriter(new BinaryFormatter(), File.AppendText( Path.Combine(currChatDir.FullName, chatsOfDay) ).BaseStream );
-							bfw.Write(message);
-							bfw.Close();
-							
-							Username[] users = File.ReadAllLines( Path.Combine(currChatDir.FullName, infoFileName) ).Select( text => text.ToUsername() ).ToArray();
+						Message msg = clientMsg.UpdateMessageDateTime();
 
-							//File.WriteAllText(Path.Combine(currChatDir.FullName, IDFileName), (++MsgID).ToString());
-							return (true, users, string.Empty);
-						//}
-						//else
-						//{
-						//	return (false, null, "Unsupported messageID format.");
-						//}
+						// save message
+						BinaryFormatterWriter bfw = new BinaryFormatterWriter(new BinaryFormatter(), File.AppendText( Path.Combine(currChatDir.FullName, chatsOfDay) ).BaseStream );
+						bfw.Write(msg);
+						bfw.Close();
+							
+						Username[] users = File.ReadAllLines( Path.Combine(currChatDir.FullName, infoFileName) ).Select( text => text.ToUsername() ).ToArray();
+
+						//File.WriteAllText(Path.Combine(currChatDir.FullName, IDFileName), (++MsgID).ToString());
+						return (true, users, msg, string.Empty);
 					default:
-						return (false, null, "Unsupported message type.");
+						return (false, null, null, "Unsupported message type.");
 				}
 			}
 		}
@@ -138,19 +129,19 @@ namespace ChatServer
 			}
 		}
 
-		public bool Connect()
-		{
-			if (Directory.Exists(Path.Combine(".", masterDirName)) && Directory.Exists(Path.Combine(".", masterDirName, usersDirName))
-				&& Directory.Exists(Path.Combine(".", masterDirName, chatsDirName)) && Directory.Exists(Path.Combine(".", masterDirName, groupChatsDirName)))
-			{
-				_initialized = true;
-			}
-			else
-			{
-				Init();
-			}
-			return true;
-		}
+		//public bool Connect()
+		//{
+		//	if (Directory.Exists(Path.Combine(".", masterDirName)) && Directory.Exists(Path.Combine(".", masterDirName, usersDirName))
+		//		&& Directory.Exists(Path.Combine(".", masterDirName, chatsDirName)) && Directory.Exists(Path.Combine(".", masterDirName, groupChatsDirName)))
+		//	{
+		//		_initialized = true;
+		//	}
+		//	else
+		//	{
+		//		Init();
+		//	}
+		//	return true;
+		//}
 
 		//public (bool success, string ReasonOrName) CreateChat(Username[] users, Message msg)
 		//{
@@ -281,7 +272,7 @@ namespace ChatServer
 					foreach (var username in users)
 					{
 						AddChat(info.Type, chatID, username);
-						AddContact(username, users);
+						AddContacts(username, users);
 					}
 
 					return (true, info, string.Empty);
@@ -310,7 +301,7 @@ namespace ChatServer
 					foreach (var username in users)
 					{
 						AddChat(info.Type, chatID, username);
-						AddContact(username, users);
+						AddContacts(username, users);
 					}
 
 					return (true, info, string.Empty);
@@ -323,7 +314,7 @@ namespace ChatServer
 			}
 		}
 
-		private void AddContact(Username username, Username[] users)
+		private void AddContacts(Username username, Username[] users)
 		{
 			lock (this)
 			{
@@ -374,40 +365,34 @@ namespace ChatServer
 
 		private string SimpleChatDefaultFileName(Username username1, Username username2)
 		{
-			return username1.ToString() + "," + username2.ToString();
-		}
-
-		public IEnumerable<Username> GetUsers()
-		{
-			return allUsernames;
-		}
-
-		public bool Init()
-		{
-			if (_initialized) return true;
-			Directory.CreateDirectory(Path.Combine(masterDirName, usersDirName));
-			Directory.CreateDirectory(Path.Combine(masterDirName, chatsDirName));
-			Directory.CreateDirectory(Path.Combine(masterDirName, groupChatsDirName));
-
-			using (var writer = new StreamWriter(File.Create(Path.Combine(masterDirName, infoFileName))))
+			if (username1.CompareTo(username2) > 0)
 			{
-				var dt = DateTime.Now;
-				writer.Write($"Created on {dt.Day}.{dt.Month}.{dt.Year} at {dt.Hour}:{dt.Minute}.");
+				return username1.ToString() + "," + username2.ToString();
 			}
-
-			_initialized = true;
-			return true;
+			return username2.ToString() + "," + username1.ToString();
 		}
 
-		public bool MakeOnline(User user)
-		{
-			return onlineUsers.Add(user.username);
-		}
+		//public IEnumerable<Username> GetUsers()
+		//{
+		//	return allUsernames;
+		//}
 
-		public void Run()
-		{
-			throw new NotImplementedException();
-		}
+		//public bool Init()
+		//{
+		//	if (_initialized) return true;
+		//	Directory.CreateDirectory(Path.Combine(masterDirName, usersDirName));
+		//	Directory.CreateDirectory(Path.Combine(masterDirName, chatsDirName));
+		//	Directory.CreateDirectory(Path.Combine(masterDirName, groupChatsDirName));
+
+		//	using (var writer = new StreamWriter(File.Create(Path.Combine(masterDirName, infoFileName))))
+		//	{
+		//		var dt = DateTime.Now;
+		//		writer.Write($"Created on {dt.Day}.{dt.Month}.{dt.Year} at {dt.Hour}:{dt.Minute}.");
+		//	}
+
+		//	_initialized = true;
+		//	return true;
+		//}
 
 		public bool Contains(Email email)
 		{
@@ -684,6 +669,52 @@ namespace ChatServer
 				else
 				{
 					return (false, "User is not online or does not exist in database.");
+				}
+			}
+		}
+
+		public (bool success, Username[] users, string reason) DeleteMessage(ChatType chatType, long chatID, DateTime dateTime)
+		{
+			lock (this)
+			{
+				try
+				{
+					var chatDir = GetChatDir(chatType, chatID);
+
+					var fileName = string.Format("{0:D4}-{1:D2}-{2:D2}", dateTime.Year, dateTime.Month, dateTime.Day);
+					BinaryFormatter bf = new BinaryFormatter();
+					var reader = new BinaryFormatterReader(bf, File.OpenRead( Path.Combine(chatDir.FullName, fileName) ));
+
+					List<Message> messages = new List<Message>();
+					Message msg;
+					while(reader.stream.Position < reader.stream.Length)
+					{
+						msg = (Message)reader.Read();
+						if (msg.Datetime == dateTime)
+						{
+							continue;
+						}
+						else
+						{
+							messages.Add( msg );
+						}
+					
+					}
+					reader.Close();
+
+					var writer = new BinaryFormatterWriter(bf, File.Create( Path.Combine(chatDir.FullName, fileName) ) );
+					foreach (var message in messages)
+					{
+						writer.Write(message);
+					}
+					writer.Close();
+
+					var usernames = File.ReadAllLines( Path.Combine(chatDir.FullName, infoFileName) );
+					return (true, usernames.Select( u => u.ToUsername()).ToArray(), string.Empty );
+				}
+				catch (Exception e)
+				{
+					return (false, null, "Unknown database error during deleting message.");
 				}
 			}
 		}
