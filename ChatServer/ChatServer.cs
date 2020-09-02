@@ -109,11 +109,12 @@ namespace ChatServer
 				Console.Out.WriteLine("Connection accepted.");
 				lock (activeSessions)
 				{
-					while ( activeSessions.Contains(sessionID))
+					while ( activeSessions.Contains(sessionID) )
 					{
 						sessionID++;
 					}
 					currSessionID = sessionID++;
+					activeSessions.Add( currSessionID );
 				}
 				Task.Run(() => {
 					new ServerSession(client, this, currSessionID).HandleConnection();
@@ -123,15 +124,13 @@ namespace ChatServer
 		}
 		public class ServerSession
 		{
-			private const int sleepConst = 50;
-
 			private long sessionID;
 			private TcpClient client;
 			private ChatServer server;
 			private bool loggedIn = false;
 
-			public bool? addUserResult = null;
-			public bool? loginResult = null;
+			private readonly BinaryFormatterReader br;
+			private readonly BinaryFormatterWriter bw;
 
 			Response resp;
 			Request req;
@@ -141,8 +140,6 @@ namespace ChatServer
 			Username loggedUser = new Username();
 			bool success; string reason;
 
-			private readonly BinaryFormatterReader br;
-			BinaryFormatterWriter bw;
 			internal ServerSession(TcpClient client, ChatServer server, long sessionID)
 			{
 				this.sessionID = sessionID;
@@ -173,11 +170,11 @@ namespace ChatServer
 				}
 				catch (SerializationException e)
 				{
-					if ( !loggedUser.Equals( new Username() ) )
+					if ( loggedIn )
 					{
 						server.loggedInUsers.Remove(loggedUser);
-						server.writersPerUsername.TryRemove(loggedUser, out var writer);
 						server.database.MakeOffline(loggedUser);
+						server.writersPerUsername.TryRemove(loggedUser, out var writer);
 						server.database.UnloadContacts(loggedUser);
 						writer.Close();
 						loggedIn = false; // not neccessary
@@ -186,6 +183,10 @@ namespace ChatServer
 				catch ( Exception e )
 				{
 					Console.Error.WriteLine("Exception -> {}", e);
+				}
+				finally
+				{
+					server.activeSessions.Remove(this.sessionID);
 				}
 			}
 
@@ -225,7 +226,7 @@ namespace ChatServer
 							break;
 						case RequestType.NewMessage:
 							NewMessageRequest NMReq = (NewMessageRequest)req;
-							(success, users, reason) = server.database.AddMessage(NMReq.chatType, NMReq.chatID, NMReq.message);
+							(success, users, msg, reason) = server.database.AddMessage(NMReq.chatType, NMReq.chatID, NMReq.message);
 
 							// (future) confirm receiving the message
 
@@ -233,13 +234,28 @@ namespace ChatServer
 							{
 								server.writersPerUsername.TryGetValue(user, out var writer);
 								if (writer != null) {
-									writer.Write( new AddMessageResponse( NMReq.chatType, NMReq.chatID, NMReq.message, sessionID) );
+									writer.Write( new AddMessageResponse( NMReq.chatType, NMReq.chatID, msg, sessionID) );
 								}
 							}
 
 							msg = null;
 							users = null;
 							reason = null;
+							break;
+						case RequestType.DeleteMessage:
+							DeleteMessageRequest DMReq = (DeleteMessageRequest)req;
+							(success, users, reason) = server.database.DeleteMessage(DMReq.chatType, DMReq.chatID, DMReq.dateTime);
+
+							if (success)
+							{
+								foreach (var user in users)
+								{
+									if (server.writersPerUsername.TryGetValue(user, out var writer))
+									{
+										writer.Write( new DeleteMessageResponse(DMReq.chatType, DMReq.chatID, DMReq.dateTime, sessionID) );
+									}
+								}
+							}
 							break;
 						case RequestType.GetOnlineContacts:
 							OnlineContactsRequest OCReq = (OnlineContactsRequest)req;
