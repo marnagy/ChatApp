@@ -20,6 +20,7 @@ namespace ChatLib.Requests
 		protected const string MessageSerializationName = "Message";
 		protected const string OldPasswordSerializationName = "OldPassword";
 		protected const string NewPasswordSerializationName = "NewPassword";
+		protected const string DateTimeSerializationName = "DateTime";
 
 		public readonly RequestType Type;
 		public readonly long SessionID;

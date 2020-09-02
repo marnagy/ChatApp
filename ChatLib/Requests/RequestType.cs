@@ -10,6 +10,7 @@ namespace ChatLib.Requests
 		SignIn,
 		NewChat,
 		NewMessage,
+		DeleteMessage,
 		GetOnlineContacts,
 		ChangePassword
 	}
