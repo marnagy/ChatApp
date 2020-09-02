@@ -88,6 +88,13 @@ namespace ChatClient
 									page.listView.ScrollTo(msg, ScrollToPosition.End, animated: true);
 								}
 								break;
+							case ResponseType.DeleteMessage:
+								DeleteMessageResponse DMResp = (DeleteMessageResponse)resp;
+								if ( chats.TryGetValue((DMResp.chatType, DMResp.chatID), out var chatInfo) )
+								{
+									chatInfo.DeleteMessage(DMResp.dateTime);
+								}
+								break;
 							case ResponseType.OnlineContacts:
 								OnlineContactsResponse OCResp = (OnlineContactsResponse)resp;
 								onlineContacts.Clear();
@@ -174,6 +181,7 @@ namespace ChatClient
 
 		private void UpdateChatsView(ObservableCollection<ChatInfoCell> chatViews, List<ChatInfo> chats)
 		{
+			chats.Sort((a,b) => DateTime.Compare(a.lastMessageTime, b.lastMessageTime) );
 			chatViews.Clear();
 
 			foreach (var item in chats)
