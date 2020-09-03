@@ -56,15 +56,6 @@ namespace ChatClient
 		private BinaryFormatterReader reader;
 		private long sessionID;
 
-		//private string emailLabelText = "E-mail";
-		//private string emailBtnPlaceHolder = "Enter e-mail";
-
-		//private string usernameLabelText = "Username";
-		//private string usernameBtnPlaceHolder = "Enter username";
-
-		//private const string passwordLabelText = "Password";
-		//private const string passwordBtnPlaceHolder = "Enter password";
-
 		bool creatingAccount = false;
 		bool isLoading = false;
 		public LoginPage(App app)

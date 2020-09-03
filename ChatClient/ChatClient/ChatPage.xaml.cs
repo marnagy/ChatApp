@@ -37,7 +37,6 @@ namespace ChatClient
 			messages = info.GetMessages();
 			listView = list;
 			list.ItemsSource = messages;
-			//list.ChildAdded += ScrollDown;
 		}
 
 		private void button_Clicked(object sender, EventArgs e)

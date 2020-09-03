@@ -372,28 +372,6 @@ namespace ChatServer
 			return username2.ToString() + "," + username1.ToString();
 		}
 
-		//public IEnumerable<Username> GetUsers()
-		//{
-		//	return allUsernames;
-		//}
-
-		//public bool Init()
-		//{
-		//	if (_initialized) return true;
-		//	Directory.CreateDirectory(Path.Combine(masterDirName, usersDirName));
-		//	Directory.CreateDirectory(Path.Combine(masterDirName, chatsDirName));
-		//	Directory.CreateDirectory(Path.Combine(masterDirName, groupChatsDirName));
-
-		//	using (var writer = new StreamWriter(File.Create(Path.Combine(masterDirName, infoFileName))))
-		//	{
-		//		var dt = DateTime.Now;
-		//		writer.Write($"Created on {dt.Day}.{dt.Month}.{dt.Year} at {dt.Hour}:{dt.Minute}.");
-		//	}
-
-		//	_initialized = true;
-		//	return true;
-		//}
-
 		public bool Contains(Email email)
 		{
 			return allEmails.Contains(email);

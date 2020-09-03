@@ -55,45 +55,7 @@ namespace ChatServer
 		{
 			this.port = port;
 			this.database = database;
-			//Thread DBThread = new Thread(new ThreadStart(() => {
-			//	DBRequestsHandler(databaseRequests, database, ref killDB);
-			//}));
-			//DBThread.Start();
 		}
-		//private void DBRequestsHandler(Queue<(ServerSession, IDatabaseRequest)> queue, IDatabase database, ref bool killDB)
-		//{
-		//	while (!killDB)
-		//	{
-		//		while (queue.Count == 0)
-		//		{
-		//			Thread.Sleep(50);
-		//		}
-		//		var (session, request) = queue.Dequeue();
-		//		var requestType = request.type;
-		//		switch (requestType)
-		//		{
-		//			case DatabaseRequestType.CreateAccount:
-		//				var currRequest = (DatabaseNewAccountRequest)request;
-		//				if (!database.Contains(email: currRequest.email)
-		//					&& !database.Contains(username: currRequest.username))
-		//				{
-		//					database.AddUser(currRequest.email, currRequest.username,
-		//						currRequest.password);
-		//					session.addUserResult = true;
-		//				}
-		//				else
-		//				{
-		//					session.addUserResult = false;
-		//				}
-		//				break;
-		//			case DatabaseRequestType.Login:
-
-		//				break;
-		//			default:
-		//				break;
-		//		}
-		//	}
-		//}
 		public void Run()
 		{
 			TcpListener listener = new TcpListener(port);

@@ -14,11 +14,8 @@ namespace ChatClient
 	[XamlCompilation(XamlCompilationOptions.Compile)]
 	public partial class OnlineContactsPage : ContentPage
 	{
-		//private ObservableCollection<StringCell> onlineContacts;
-
 		public OnlineContactsPage(ObservableCollection<StringCell> onlineContacts)
 		{
-			//this.onlineContacts = onlineContacts;
 			InitializeComponent();
 			listView.ItemsSource = onlineContacts;
 		}
