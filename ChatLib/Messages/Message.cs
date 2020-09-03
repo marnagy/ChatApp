@@ -24,10 +24,10 @@ namespace ChatLib.Messages
 		// class specific variables
 		public string hasText {get => (text.Length > 0).ToString(); }
 		public string text { get; set; } = string.Empty;
-		protected Message(MessageType type, long id, Username sender)
+		protected Message(MessageType type, long ChatID, Username sender)
 		{
 			this.Type = type;
-			this.ChatID = id;
+			this.ChatID = ChatID;
 			this.SenderUsername = sender;
 			this.Datetime = DateTime.UtcNow;
 		}
@@ -48,5 +48,6 @@ namespace ChatLib.Messages
 		}
 
 		public abstract void GetObjectData(SerializationInfo info, StreamingContext context);
+		public abstract Message UpdateMessageDateTime();
 	}
 }

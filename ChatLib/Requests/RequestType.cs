@@ -9,6 +9,9 @@ namespace ChatLib.Requests
 		NewAccount,
 		SignIn,
 		NewChat,
-		NewMessage
+		NewMessage,
+		DeleteMessage,
+		GetOnlineContacts,
+		ChangePassword
 	}
 }

@@ -13,7 +13,11 @@ namespace ChatLib.Messages
 	{
 		//private const string _XmlElementName = "TextMessage";
 		private const MessageType type = MessageType.TextMessage;
-		public TextMessage(Username sender, long id, string text) : base(type, id, sender)
+		public TextMessage(Username sender, long chatID, string text) : base(type, chatID, sender)
+		{
+			this.text = text;
+		}
+		private TextMessage(Username sender, long chatID, string text, DateTime dateTime) : base( (type, chatID, sender, dateTime) )
 		{
 			this.text = text;
 		}
@@ -30,6 +34,11 @@ namespace ChatLib.Messages
 			info.AddValue("DateTime", Datetime);
 
 			info.AddValue("Text", text);
+		}
+
+		public override Message UpdateMessageDateTime()
+		{  
+			return new TextMessage(SenderUsername, ChatID, text, DateTime.Now);
 		}
 	}
 }

@@ -120,6 +120,19 @@ namespace ChatLib
 			//info.AddValue("Messages", messages.ToArray() );
 		}
 
+		public void DeleteMessage(DateTime dateTime)
+		{
+			for (int i = 0; i < messages.Count; i++)
+			{
+				if (messages[i].Datetime == dateTime)
+				{
+					messages.RemoveAt(i);
+					return;
+				}
+			}
+			throw new ArgumentException("Message with given datetime not found.");
+		}
+
 		public int CompareTo(ChatInfo other)
 		{
 			return DateTime.Compare(this.lastMessageTime, other.lastMessageTime);

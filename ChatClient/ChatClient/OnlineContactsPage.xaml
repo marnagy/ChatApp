@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ChatClient.OnlineContactsPage">
+	<ContentPage.Content>
+		<StackLayout>
+			<Label Text="Your online contacts" HorizontalOptions="CenterAndExpand" VerticalOptions="Start"
+				   HeightRequest="50" FontSize="Large"/>
+			<ListView x:Name="listView" VerticalOptions="Fill"
+					  HorizontalOptions="Fill">
+				<ListView.ItemTemplate>
+					<DataTemplate>
+						<ViewCell>
+							<Label Text="{Binding value}" HorizontalOptions="Center" VerticalOptions="Center"
+								   FontSize="Medium"/>
+						</ViewCell>
+					</DataTemplate>
+				</ListView.ItemTemplate>
+			</ListView>
+		</StackLayout>
+	</ContentPage.Content>
+</ContentPage>

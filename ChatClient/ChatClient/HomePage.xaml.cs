@@ -1,5 +1,6 @@
 ﻿using ChatLib;
 using ChatLib.BinaryFormatters;
+using ChatLib.Requests;
 using ChatLib.Responses;
 using System;
 using System.Collections.Concurrent;
@@ -20,14 +21,17 @@ namespace ChatClient
 	[XamlCompilation(XamlCompilationOptions.Compile)]
 	public partial class HomePage : ContentPage
 	{
-		private const int sleepConst = 50;
+		private const int sleepConst = 10_000;
 
 		private readonly App app;
 
 		private readonly ObservableCollection<ChatInfoCell> chatViews = new ObservableCollection<ChatInfoCell>();
+		private readonly ObservableCollection<StringCell> onlineContacts = new ObservableCollection<StringCell>();
 		private readonly Dictionary<(ChatType, long), ChatInfo> chats = new Dictionary<(ChatType, long), ChatInfo>();
 		private readonly Dictionary<(ChatType, long), ChatPage> pages = new Dictionary<(ChatType, long), ChatPage>();
-		private readonly HashSet<Username> simpleChatUsernames = new HashSet<Username>();
+		private readonly OnlineContactsPage onlineContactsPage;
+		private readonly SettingsPage settingsPage;
+
 		private readonly long sessionID;
 		private readonly Username myUsername;
 		private readonly BinaryFormatterWriter writer;
@@ -35,7 +39,7 @@ namespace ChatClient
 		public List<Username> NCUsernames;
 
 		private readonly Thread ReadingThread;
-		//private readonly List<ChatInfo> chats = new List<ChatInfo>();
+		private readonly Thread OnlineContactsThread;
 
 		public HomePage(App app, Username username, BinaryFormatterWriter writer, BinaryFormatterReader reader, AccountInfoResponse aiResp, long sessionID)
 		{
@@ -43,6 +47,8 @@ namespace ChatClient
 			myUsername = username;
 			this.writer = writer;
 			this.sessionID = sessionID;
+			this.onlineContactsPage = new OnlineContactsPage(onlineContacts);
+			this.settingsPage = new SettingsPage(myUsername, writer, sessionID);
 			InitializeComponent();
 
 			LoadChats(aiResp.SimpleChats, aiResp.GroupChats);
@@ -81,15 +87,48 @@ namespace ChatClient
 									chat.AddMessage(msg);
 									page.listView.ScrollTo(msg, ScrollToPosition.End, animated: true);
 								}
-								
+								break;
+							case ResponseType.DeleteMessage:
+								DeleteMessageResponse DMResp = (DeleteMessageResponse)resp;
+								if ( chats.TryGetValue((DMResp.chatType, DMResp.chatID), out var chatInfo) )
+								{
+									chatInfo.DeleteMessage(DMResp.dateTime);
+								}
+								break;
+							case ResponseType.OnlineContacts:
+								OnlineContactsResponse OCResp = (OnlineContactsResponse)resp;
+								onlineContacts.Clear();
+								foreach (var user in OCResp.users)
+								{
+									onlineContacts.Add( new StringCell(){ value = user.ToString() } );
+								}
+								break;
+							case ResponseType.Success:
+								Device.BeginInvokeOnMainThread( () => DisplayAlert("Success", "Your password has been changed.", "Okay")
+									);
+								break;
+							case ResponseType.Fail:
+								FailResponse FResp = (FailResponse)resp;
+								Device.BeginInvokeOnMainThread( () => DisplayAlert("Action Failed", FResp.Reason, "Okay")
+									);
 								break;
 							default:
 								break;
 						}
 					}
 				}));
+			OnlineContactsThread = new Thread(new ThreadStart(() =>
+				{
+					while (true)
+					{
+						writer.Write( new OnlineContactsRequest(myUsername, sessionID) );
+						Thread.Sleep(sleepConst);
+					}
+				}));
 			ReadingThread.IsBackground = true;
+			OnlineContactsThread.IsBackground = true;
 			ReadingThread.Start();
+			OnlineContactsThread.Start();
 		}
 
 		private void LoadChats(IReadOnlyList<ChatInfo> simpleChats, IReadOnlyList<ChatInfo> groupChats)
@@ -135,8 +174,6 @@ namespace ChatClient
 				}
 			}
 
-			//List<ChatInfo> chatsList = new List<ChatInfo>(this.chats.Values);
-
 			chats.Sort((a,b) => DateTime.Compare(a.lastMessageTime, b.lastMessageTime));
 
 			UpdateChatsView(chatViews, chats);
@@ -144,6 +181,7 @@ namespace ChatClient
 
 		private void UpdateChatsView(ObservableCollection<ChatInfoCell> chatViews, List<ChatInfo> chats)
 		{
+			chats.Sort((a,b) => DateTime.Compare(a.lastMessageTime, b.lastMessageTime) );
 			chatViews.Clear();
 
 			foreach (var item in chats)
@@ -168,6 +206,7 @@ namespace ChatClient
 
 		private void newChat_Click(object sender, EventArgs e)
 		{
+
 			var page = new NewSimpleChatPage(myUsername, writer, sessionID);
 
 			Navigation.PushModalAsync( page, animated: true);
@@ -178,7 +217,15 @@ namespace ChatClient
 			var page = new NewGroupChatPage(myUsername, writer, sessionID);
 
 			Navigation.PushModalAsync( page, animated: true);
-			//DisplayAlert("Error", "This feature is not yet implemented.", "OK");
+		}
+		private void ShowOnlineContacts_Click(object sender, EventArgs e)
+		{
+			Navigation.PushAsync( onlineContactsPage, animated: true);
+		}
+
+		private void SettingsButton_Clicked(object sender, EventArgs e)
+		{
+			Navigation.PushAsync( settingsPage , animated: true);
 		}
 	}
 }

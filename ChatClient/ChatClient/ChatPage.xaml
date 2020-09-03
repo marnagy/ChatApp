@@ -6,8 +6,7 @@
 		<StackLayout Orientation="Vertical">
 			<ListView x:Name="list" VerticalOptions="FillAndExpand"
 					  SeparatorVisibility="None" HasUnevenRows="True"
-					  ItemTapped="list_ItemTapped" SelectionMode="None"
-					  ChildAdded="ScrollDown">
+					  ItemTapped="list_ItemTapped" SelectionMode="None">
 				<ListView.ItemTemplate>
 					<DataTemplate>
 						<ViewCell>

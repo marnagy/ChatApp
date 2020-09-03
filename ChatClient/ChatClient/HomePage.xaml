@@ -3,14 +3,24 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:d="http://xamarin.com/schemas/2014/forms/design"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:chatlib="clr-namespace:ChatLib;assembly=ChatLib"
+			 xmlns:local="clr-namespace:ChatClient"
 			 mc:Ignorable="d"
              x:Class="ChatClient.HomePage">
 	<ContentPage.BindingContext>
 		<chatlib:ChatType/>
 	</ContentPage.BindingContext>
+	<NavigationPage.TitleView>
+		<StackLayout Orientation="Horizontal" HorizontalOptions="End">
+			<ImageButton Clicked="SettingsButton_Clicked"
+						Source="{local:ImageResource ChatClient.ic_action_settings.png}"
+						 BorderWidth="0" BackgroundColor="Transparent"
+						HorizontalOptions="End"
+						HeightRequest="50" WidthRequest="50"/>
+		</StackLayout>
+	</NavigationPage.TitleView>
 	<ContentPage.Content>
 		<StackLayout Orientation="Vertical">
-			<ListView x:Name="listView" BackgroundColor="GhostWhite"
+			<ListView x:Name="listView" BackgroundColor="Transparent"
 					  ItemTapped="ListView_ItemTapped"
 					  HorizontalOptions="FillAndExpand" VerticalOptions="StartAndExpand">
 				<ListView.ItemTemplate>
@@ -27,12 +37,14 @@
 				<Grid.RowDefinitions>
 					<RowDefinition Height="Auto"/>
 				</Grid.RowDefinitions>
+				<Button Text="Show Online contacts" Clicked="ShowOnlineContacts_Click"
+						Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2"/>
 				<Button x:Name="newChatBtn" Text="Start New Chat"
 						Clicked="newChat_Click" Grid.Column="0"
-						Visual="Material"/>
+						Visual="Material" Grid.Row="1"/>
 				<Button x:Name="newGroupChatBtn" Text="Start New Group Chat"
 						Clicked="newGroupChat_Click" Grid.Column="1"
-						Visual="Material"/>
+						Visual="Material" Grid.Row="1"/>
 			</Grid>
 		</StackLayout>
 	</ContentPage.Content>

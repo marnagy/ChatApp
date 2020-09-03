@@ -5,7 +5,7 @@ using Xamarin.Forms;
 
 namespace ChatClient
 {
-	class StringCell : Cell
+	public class StringCell : Cell
 	{
 		public string value {get; set;}
 	}
