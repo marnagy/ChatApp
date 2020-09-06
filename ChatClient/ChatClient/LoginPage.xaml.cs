@@ -18,7 +18,8 @@ namespace ChatClient
 	{
 		private const int defaultPort = 5318;
 		//private const string hostname = "10.0.2.2";
-		private const string hostname = "192.168.2.12";
+		//private const string hostname = "192.168.2.12";
+		private string hostname;
 
 		private const string ConnectionErrorTitle = "Server was not reached.";
 		private const string ConnectionErrorMessage = "Server appears to be unavailable.\nPlease, try again later.";
@@ -62,8 +63,6 @@ namespace ChatClient
 		{
 			this.app = app;
 			InitializeComponent();
-			client = Connection.Connect(hostname, defaultPort, ref writer, ref reader);
-			sessionID = (long)reader.Read();
 		}
 
 		private void newAccountBtn_Clicked(object sender, EventArgs e)
@@ -81,10 +80,13 @@ namespace ChatClient
 			indicator.IsRunning = true;
 			//Task.Run(() => {
 				try{
-					if (!client.Connected)
+					if ( client == null )
 					{
+						hostname = serverEntry.Text.Trim();
 						client = Connection.Connect(hostname, defaultPort, ref writer, ref reader);
 						sessionID = (long)reader.Read();
+						serverLabel.IsVisible = false;
+						serverEntry.IsVisible = false;
 					}
 					var username = usernameEntry.Text.Trim().ToUsername();
 					var password = passwordEntry.Text.ToPassword();
@@ -146,10 +148,13 @@ namespace ChatClient
 			indicator.IsRunning = true;
 			//Task.Run(() => {
 				try{
-					if (!client.Connected)
+					if ( client == null )
 					{
+						hostname = serverEntry.Text.Trim();
 						client = Connection.Connect(hostname, defaultPort, ref writer, ref reader);
 						sessionID = (long)reader.Read();
+						serverLabel.IsVisible = false;
+						serverEntry.IsVisible = false;
 					}
 					NewAccountRequest req = default;
 					var email = emailEntry.Text.Trim();

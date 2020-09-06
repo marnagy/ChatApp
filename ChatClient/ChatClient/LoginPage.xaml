@@ -19,6 +19,9 @@
 			<Label x:Name="passwordLabel" FontSize="Medium" HorizontalOptions="Center" Text="Password" />
 			<Entry x:Name="passwordEntry" Placeholder="Enter password" IsPassword="True" 
 				   HorizontalTextAlignment="Center"/>
+			<Label x:Name="serverLabel" FontSize="Medium" HorizontalOptions="Center" Text="Server Hostname" />
+			<Entry x:Name="serverEntry" Placeholder="Enter server hostname"
+				   HorizontalTextAlignment="Center"/>
 			
 			<Grid x:Name="btnGrid">
 				<Grid.ColumnDefinitions>
